@@ -54,10 +54,9 @@ namespace drafter
     };
 
     struct RefractElementFactory {
-        virtual ~RefractElementFactory()
-        {
-        }
-        virtual refract::IElement* Create(const std::string& literal, FactoryCreateMethod type) const = 0;
+        virtual ~RefractElementFactory() {}
+        virtual std::unique_ptr<refract::IElement> Create(
+            const std::string& literal, FactoryCreateMethod type) const = 0;
     };
 
     /**

@@ -8,38 +8,38 @@
 #ifndef REFRACT_ITERATE_H
 #define REFRACT_ITERATE_H
 
+#include "ElementIfc.h"
 #include "ElementFwd.h"
+#include "Visitor.h"
+#include "data/Traits.h"
 
 namespace refract
 {
-
     struct Recursive {
 
         template <typename T, typename V = typename T::ValueType>
         struct Iterate {
 
-            template <typename U, bool dummy = true>
+            template <typename U, bool IsIterable = data::is_iterable<U>::value, bool IsPair = data::is_pair<U>::value>
             struct Impl {
-                void operator()(IApply* apply, Visitor&, const U&)
-                {
-                }
+                void operator()(IApply* apply, Visitor&, const U&) {}
             };
 
-            template <bool dummy>
-            struct Impl<RefractElements, dummy> {
-                void operator()(IApply* apply, Visitor& v, const RefractElements& e)
+            template <typename U, bool IsPair>
+            struct Impl<U, true, IsPair> {
+                void operator()(IApply* apply, Visitor& v, const U& e)
                 {
-                    for (RefractElements::const_iterator i = e.begin(); i != e.end(); ++i) {
-                        if (!(*i))
+                    for (const auto& child : e) {
+                        if (!child)
                             continue;
-                        (*i)->content(v);
+                        child->content(v);
                     }
                 }
             };
 
-            template <bool dummy>
-            struct Impl<MemberElement::ValueType, dummy> {
-                void operator()(IApply* apply, Visitor& v, const MemberElement::ValueType& e)
+            template <typename U, bool IsIterable>
+            struct Impl<U, IsIterable, true> {
+                void operator()(IApply* apply, Visitor& v, const U& e)
                 {
                     if (e.first) {
                         e.first->content(v);
@@ -70,26 +70,24 @@ namespace refract
         template <typename T, typename V = typename T::ValueType>
         struct Iterate {
 
-            template <typename U, bool dummy = true>
+            template <typename U, bool IsIterable = data::is_iterable<U>::value>
             struct Impl {
-                void operator()(Children* strategy, IApply* apply, Visitor&, const U&)
-                {
-                }
+                void operator()(Children* strategy, IApply* apply, Visitor&, const U&) {}
             };
 
-            template <bool dummy>
-            struct Impl<RefractElements, dummy> {
-                void operator()(Children* strategy, IApply* apply, Visitor& v, const RefractElements& e)
+            template <typename U>
+            struct Impl<U, true> {
+                void operator()(Children* strategy, IApply* apply, Visitor& v, const U& e)
                 {
                     if (strategy->level) { // we need no go deeply
                         return;
                     }
 
                     strategy->level++;
-                    for (RefractElements::const_iterator i = e.begin(); i != e.end(); ++i) {
-                        if (!(*i))
+                    for (const auto& el : e) {
+                        if (!el) // decide whether this is an assert
                             continue;
-                        (*i)->content(v);
+                        el->content(v);
                     }
                     strategy->level--;
                 }
@@ -97,14 +95,12 @@ namespace refract
 
             void operator()(Children* strategy, IApply* apply, Visitor& iterable, const T& e)
             {
-                Impl<V>()(strategy, apply, iterable, e.value);
+                Impl<V>()(strategy, apply, iterable, e.get());
             }
         };
 
         int level;
-        Children() : level(0)
-        {
-        }
+        Children() : level(0) {}
 
         template <typename T>
         void operator()(IApply* apply, Visitor& iterable, const T& e)

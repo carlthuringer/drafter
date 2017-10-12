@@ -13,21 +13,19 @@ namespace refract
 
     namespace
     {
-        struct CheckElement {
-            bool checkElement(const IElement* e) const
-            {
-                std::string type;
+        bool checkElement(const IElement* e)
+        {
+            std::string type;
 
-                if (e) {
-                    type = e->element();
-                }
-
-                return !isReserved(type);
+            if (e) {
+                type = e->element();
             }
-        };
 
-        template <typename T, typename V = typename T::ValueType>
-        struct IsExpandable : public CheckElement {
+            return !isReserved(type.c_str());
+        }
+
+        template <typename T, typename V = typename T::ValueType, bool IsIterable = data::is_iterable<V>::value>
+        struct IsExpandable {
             bool operator()(const T* e) const
             {
 
@@ -40,7 +38,7 @@ namespace refract
         };
 
         template <typename T>
-        struct IsExpandable<T, RefElement::ValueType> : public CheckElement {
+        struct IsExpandable<T, RefElement::ValueType, false> {
             bool operator()(const T* e) const
             {
 
@@ -49,7 +47,7 @@ namespace refract
         };
 
         template <typename T>
-        struct IsExpandable<T, SelectElement::ValueType> : public CheckElement {
+        struct IsExpandable<T, SelectElement::ValueType, true> {
             bool operator()(const T* e) const
             {
 
@@ -57,9 +55,9 @@ namespace refract
                     return true;
                 }
 
-                for (std::vector<OptionElement*>::const_iterator i = e->value.begin(); i != e->value.end(); ++i) {
+                for (const auto& option : e->get()) {
                     IsExpandableVisitor v;
-                    VisitBy(*(*i), v);
+                    VisitBy(*option, v);
 
                     if (v.get()) {
                         return true;
@@ -71,7 +69,7 @@ namespace refract
         };
 
         template <typename T>
-        struct IsExpandable<T, MemberElement::ValueType> : public CheckElement {
+        struct IsExpandable<T, MemberElement::ValueType, false> {
             bool operator()(const T* e) const
             {
 
@@ -79,17 +77,19 @@ namespace refract
                     return true;
                 }
 
-                if (e->value.first) {
+                const auto& content = e->get();
+
+                if (const IElement* key = content.key()) {
                     IsExpandableVisitor v;
-                    VisitBy(*e->value.first, v);
+                    VisitBy(*key, v);
                     if (v.get()) {
                         return true;
                     }
                 }
 
-                if (e->value.second) {
+                if (const IElement* value = content.value()) {
                     IsExpandableVisitor v;
-                    VisitBy(*e->value.second, v);
+                    VisitBy(*value, v);
                     if (v.get()) {
                         return true;
                     }
@@ -99,8 +99,8 @@ namespace refract
             }
         };
 
-        template <typename T>
-        struct IsExpandable<T, RefractElements> : public CheckElement {
+        template <typename T, typename V>
+        struct IsExpandable<T, V, true> {
             bool operator()(const T* e) const
             {
 
@@ -108,9 +108,9 @@ namespace refract
                     return true;
                 }
 
-                for (std::vector<IElement*>::const_iterator i = e->value.begin(); i != e->value.end(); ++i) {
+                for (const auto& entry : e->get()) {
                     IsExpandableVisitor v;
-                    VisitBy(*(*i), v);
+                    VisitBy(*entry, v);
 
                     if (v.get()) {
                         return true;
@@ -122,9 +122,7 @@ namespace refract
         };
     } // anonymous namespace
 
-    IsExpandableVisitor::IsExpandableVisitor() : result(false)
-    {
-    }
+    IsExpandableVisitor::IsExpandableVisitor() : result(false) {}
 
     template <typename T>
     void IsExpandableVisitor::operator()(const T& e)

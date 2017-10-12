@@ -12,16 +12,16 @@
 #include <cstdlib>
 
 using namespace drafter;
+using namespace refract;
 
 namespace drafter
 {
 
-    refract::ArrayElement* CreateArrayElement(refract::IElement* value)
+    std::unique_ptr<ArrayElement> CreateArrayElement(std::unique_ptr<IElement> value)
     {
-        refract::ArrayElement* array = new refract::ArrayElement;
-
-        array->push_back(value);
-        return array;
+        auto array = make_empty<ArrayElement>();
+        array->get().push_back(std::move(value));
+        return std::move(array);
     }
 }
 
@@ -121,17 +121,16 @@ namespace drafter
 {
 
     template <>
-    std::pair<bool, bool> LiteralTo<bool>(const mson::Literal& literal)
+    std::pair<bool, data::bool_t> LiteralTo<data::bool_t>(const mson::Literal& literal)
     {
-        bool valid = false;
         if (literal == "true" || literal == "false") {
-            valid = true;
+            return std::make_pair(true, data::bool_t{ literal == SerializeKey::True });
         }
-        return std::make_pair(valid, literal == SerializeKey::True);
+        return std::make_pair(false, data::bool_t{});
     }
 
     template <>
-    std::pair<bool, double> LiteralTo<double>(const mson::Literal& literal)
+    std::pair<bool, data::number_t> LiteralTo<data::number_t>(const mson::Literal& literal)
     {
         char* pos = 0;
         bool valid = false;
@@ -146,12 +145,12 @@ namespace drafter
             valid = (literal.end() != std::find_if(literal.begin() + (end - pos), literal.end(), ::isspace));
         }
 
-        return std::make_pair(valid, value);
+        return std::make_pair(valid, data::number_t{ value });
     }
 
     template <>
     std::pair<bool, std::string> LiteralTo<std::string>(const mson::Literal& literal)
     {
-        return std::make_pair(!literal.empty(), literal);
+        return std::make_pair(!literal.empty(), data::string_t{ literal });
     }
 };

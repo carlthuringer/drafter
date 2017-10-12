@@ -16,12 +16,12 @@
 namespace refract
 {
 
-    IElement* FindRootAncestor(const std::string& name, const Registry& registry)
+    const IElement* FindRootAncestor(const std::string& name, const Registry& registry)
     {
-        IElement* parent = registry.find(name);
+        const IElement* parent = registry.find(name);
 
         while (parent && !isReserved(parent->element())) {
-            IElement* next = registry.find(parent->element());
+            const IElement* next = registry.find(parent->element());
 
             if (!next || (next == parent)) {
                 return parent;
@@ -33,41 +33,41 @@ namespace refract
         return parent;
     }
 
-    std::string Registry::getElementId(IElement* element)
+    std::string Registry::getElementId(IElement& element)
     {
-        IElement::MemberElementCollection::const_iterator it = element->meta.find("id");
+        auto it = element->meta().find("id");
 
-        if (it == element->meta.end()) {
+        if (it == element->meta().end()) {
             throw LogicError("Element has no ID");
         }
 
         // FIXME: remove dependecy on SosSerializeCompactVisitor
         SosSerializeCompactVisitor v;
-        VisitBy(*(*it)->value.second, v);
+        VisitBy(it->second, v);
 
-        if (StringElement* s = TypeQueryVisitor::as<StringElement>((*it)->value.second)) {
+        if (const StringElement* s = TypeQueryVisitor::as<const StringElement>(it->second)) {
             return s->value;
         }
 
         throw LogicError("Value of element meta 'id' is not StringElement");
     }
 
-    IElement* Registry::find(const std::string& name) const
+    const IElement* Registry::find(const std::string& name) const
     {
-        Map::const_iterator i = registrated.find(name);
+        auto i = registrated.find(name);
 
         if (i == registrated.end()) {
-            return NULL;
+            return nullptr;
         }
 
-        return i->second;
+        return i->second.get();
     }
 
-    bool Registry::add(IElement* element)
+    bool Registry::add(std::unique_ptr<IElement> element)
     {
-        IElement::MemberElementCollection::const_iterator it = element->meta.find("id");
+        auto it = element->meta().find("id");
 
-        if (it == element->meta.end()) {
+        if (it == element->meta().end()) {
             throw LogicError("Element has no ID");
         }
 
@@ -82,13 +82,13 @@ namespace refract
             return false;
         }
 
-        registrated[id] = element;
+        registrated[id] = std::move(element);
         return true;
     }
 
     bool Registry::remove(const std::string& name)
     {
-        Map::iterator i = registrated.find(name);
+        auto i = registrated.find(name);
 
         if (i == registrated.end()) {
             return false;
@@ -98,19 +98,8 @@ namespace refract
         return true;
     }
 
-    template <typename T>
-    static void DeleteSecond(T& pair)
-    {
-        delete pair.second;
-    }
-
     void Registry::clearAll(bool releaseElements)
     {
-        if (releaseElements) {
-            std::for_each(registrated.begin(), registrated.end(), DeleteSecond<Map::value_type>);
-        }
-
         registrated.clear();
     }
-
 }; // namespace refract

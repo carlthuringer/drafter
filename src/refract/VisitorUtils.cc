@@ -11,44 +11,41 @@
 namespace refract
 {
 
-    StringElement* GetDescription(const IElement& e)
+    const StringElement* GetDescription(const IElement& e)
     {
-        auto i = e.meta.find("description");
+        auto i = e.meta().find("description");
 
-        if (i == e.meta.end()) {
-            return NULL;
+        if (i == e.meta().end()) {
+            return nullptr;
         }
 
-        return TypeQueryVisitor::as<StringElement>((*i)->value.second);
+        return TypeQueryVisitor::as<const StringElement>(i->second.get());
     }
 
     std::string GetKeyAsString(const MemberElement& e)
     {
 
-        IElement* element = e.value.first;
+        auto element = e.get().key();
 
-        if (StringElement* str = TypeQueryVisitor::as<StringElement>(element)) {
-            return str->value;
+        if (auto str = TypeQueryVisitor::as<const StringElement>(element)) {
+            return str->get();
         }
 
-        if (ExtendElement* ext = TypeQueryVisitor::as<ExtendElement>(element)) {
-            IElement* merged = ext->merge();
+        if (auto ext = TypeQueryVisitor::as<const ExtendElement>(element)) {
+            auto merged = ext->get().merge();
 
-            if (StringElement* str = TypeQueryVisitor::as<StringElement>(merged)) {
+            if (auto str = TypeQueryVisitor::as<const StringElement>(merged.get())) {
 
-                std::string key = str->value;
+                std::string key = str->get();
                 if (key.empty()) {
-                    const std::string* k = GetValue<StringElement>(*str);
+                    auto k = GetValue<const StringElement>()(*str);
                     if (k) {
                         key = *k;
                     }
                 }
-                delete merged;
 
                 return key;
             }
-
-            delete merged;
         }
 
         return std::string();

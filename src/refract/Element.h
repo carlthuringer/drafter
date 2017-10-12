@@ -50,16 +50,12 @@ namespace refract
         /// Initialize a Refract Element from a DSD
         /// @remark sets name of the element to DataType::name
         ///
-        explicit Element(DataType data) : hasValue_(true), data_(std::move(data)), name_(DataType::name)
-        {
-        }
+        explicit Element(DataType data) : hasValue_(true), data_(std::move(data)), name_(DataType::name) {}
 
         ///
         /// Initialize a Refract Element from given name and DSD
         ///
-        Element(const std::string& name, DataType data) : hasValue_(true), data_(data), name_(name)
-        {
-        }
+        Element(const std::string& name, DataType data) : hasValue_(true), data_(data), name_(name) {}
 
         Element(Element&&) = default;
         Element(const Element&) = default;
@@ -80,7 +76,7 @@ namespace refract
             return data_;
         }
 
-        void set(DataType data)
+        void set(DataType data = {})
         {
             hasValue_ = true;
             data_ = data;
@@ -154,35 +150,37 @@ namespace refract
     /// @remark an empty Element has an empty data structure definition (DSD)
     ///
     template <typename ElementT>
-    auto make_element()
+    auto make_empty()
     {
         return std::make_unique<ElementT>();
     }
 
     ///
-    /// Create an Element of given type forwarding arguments to the constructor of its data structure definition
-    /// (DSD)
+    /// Create an Element of given type forwarding arguments to the constructor
+    /// of its data structure definition (DSD)
     ///
-    template <typename ElementT, typename Arg, typename... Args>
-    auto make_element(Arg&& arg, Args&&... args)
+    template <typename ElementT, typename... Args>
+    auto make_element(Args&&... args)
     {
-        using data_t = typename ElementT::ValueType;
-        return std::make_unique<ElementT>(data_t{ std::forward<Arg>(arg), std::forward<Args>(args)... });
+        using DataT = typename ElementT::ValueType;
+        return std::make_unique<ElementT>(DataT{ std::forward<Args>(args)... });
     }
 
-    template <typename T> // TODO enable_if primitive
-    auto make_primitive(T value)
+    template <typename Primitive, typename DataT = typename data::data_of<Primitive>::type>
+    auto make_primitive(const Primitive& p)
     {
-        using data_t = typename data::data_of<T>;
-        return make_element<data_t>(value);
+        return make_element<Element<DataT> >(p);
     }
 
-    template <typename T> // TODO enable_if primitive
-    auto make_primitive()
+    template <typename ElementT, typename ContentVisitor, typename... Args>
+    auto generate_element(ContentVisitor visit, Args&&... visitorArgs)
     {
-        using data_t = typename data::data_of<T>;
-        return make_element<data_t>();
+        auto element = make_element<ElementT>();
+        visit(element->get(), std::forward<Args>(visitorArgs)...);
+        return element;
     }
+
+    bool isReserved(const char* w);
 }
 
 #endif

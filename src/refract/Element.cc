@@ -11,97 +11,37 @@
 #include <set>
 #include <map>
 #include <string>
+#include <cstring>
 
 #include "ComparableVisitor.h"
 #include "TypeQueryVisitor.h"
 
-namespace refract
-{
+using namespace refract;
 
-    bool isReserved(const std::string& element)
+    namespace
     {
-        static const std::set<std::string> reserved = { "null",
-            "boolean",
-            "number",
-            "string",
-
-            "member",
-
-            "array",
-            "enum",
-            "object",
-
-            "ref",
-            "select",
-            "option",
-            "extend",
-
-            "generic" };
-
-        return reserved.find(element) != reserved.end();
+        constexpr std::array<const char*, 13> reserved_ = {
+            "array",   //
+            "boolean", //
+            "enum",    //
+            "extend",  //
+            "generic"  //
+            "member",  //
+            "null",    //
+            "number",  //
+            "object",  //
+            "option",  //
+            "ref",     //
+            "select",  //
+            "string",  //
+        };
     }
 
-    IElement::MemberElementCollection::const_iterator IElement::MemberElementCollection::find(
-        const std::string& name) const
+    bool refract::isReserved(const char* w)
     {
-        ComparableVisitor v(name);
-        Visitor visitor(v);
-
-        return std::find_if(elements.begin(), elements.end(), [&visitor, &v](const MemberElement* e) {
-            e->value.first->content(visitor);
-            return v.get();
+        return std::binary_search(reserved_.begin(), reserved_.end(), w, [](const char* first, const char* second) {
+            return (0 > std::strcmp(first, second));
         });
-    }
-
-    IElement::MemberElementCollection::iterator IElement::MemberElementCollection::find(const std::string& name)
-    {
-        ComparableVisitor v(name);
-        Visitor visitor(v);
-
-        return std::find_if(elements.begin(), elements.end(), [&visitor, &v](const MemberElement* e) {
-            e->value.first->content(visitor);
-            return v.get();
-        });
-    }
-
-    IElement::MemberElementCollection::~MemberElementCollection()
-    {
-        for (MemberElement* e : elements)
-            delete e;
-    }
-
-    StringElement* IElement::Create(const char* value)
-    {
-        return Create(std::string(value));
-    };
-
-    MemberElement& IElement::MemberElementCollection::operator[](const std::string& name)
-    {
-        auto it = find(name);
-        if (it != elements.end()) {
-            return *(*it);
-        }
-
-        elements.emplace_back(new MemberElement(new StringElement(name), nullptr));
-
-        return *elements.back();
-    }
-
-    void IElement::MemberElementCollection::clone(const IElement::MemberElementCollection& other)
-    {
-        for (const auto& el : other.elements) {
-            elements.emplace_back(static_cast<MemberElement*>(el->clone()));
-        }
-    }
-
-    void IElement::MemberElementCollection::erase(const std::string& key)
-    {
-        auto it = find(key);
-
-        if (it != elements.end()) {
-            delete *it;
-            elements.erase(it);
-        }
     }
 
     namespace
@@ -177,9 +117,7 @@ namespace refract
             template <typename T, typename V = typename T::ValueType>
             struct ValueMerge {
                 V& value;
-                ValueMerge(T& element) : value(element.value)
-                {
-                }
+                ValueMerge(T& element) : value(element.value) {}
 
                 void operator()(const T& merge)
                 {
@@ -190,9 +128,7 @@ namespace refract
             template <typename T>
             struct ValueMerge<T, IElement*> {
                 IElement*& value;
-                ValueMerge(T& element) : value(element.value)
-                {
-                }
+                ValueMerge(T& element) : value(element.value) {}
 
                 void operator()(const T& merge)
                 {
@@ -215,9 +151,7 @@ namespace refract
             struct ValueMerge<T, RefractElements> {
                 typename T::ValueType& value;
 
-                ValueMerge(T& element) : value(element.value)
-                {
-                }
+                ValueMerge(T& element) : value(element.value) {}
 
                 void operator()(const T& merge)
                 {
@@ -335,9 +269,7 @@ namespace refract
             }
 
         public:
-            ElementMerger() : result(NULL), base(TypeQueryVisitor::Unknown)
-            {
-            }
+            ElementMerger() : result(NULL), base(TypeQueryVisitor::Unknown) {}
 
             void operator()(const IElement* e)
             {
@@ -410,6 +342,5 @@ namespace refract
     {
         return std::for_each(value.begin(), value.end(), ElementMerger());
     }
-
 
 }; // namespace refract

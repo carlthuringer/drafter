@@ -1,27 +1,28 @@
 #include "RefractSourceMap.h"
 
-static refract::IElement* CharacterRangeToRefract(const mdp::CharactersRange& sourceMap)
+using namespace refract;
+
+namespace
 {
-    refract::ArrayElement* range = new refract::ArrayElement;
+    std::unique_ptr<IElement> CharacterRangeToRefract(const mdp::CharactersRange& sourceMap)
+    {
+        auto range = make_element<ArrayElement>();
+        auto& content = range->get();
 
-    range->push_back(refract::IElement::Create(sourceMap.location));
-    range->push_back(refract::IElement::Create(sourceMap.length));
+        content.push_back(make_primitive(static_cast<double>(sourceMap.location)));
+        content.push_back(make_primitive(static_cast<double>(sourceMap.length)));
 
-    return range;
+        return range;
+    }
 }
 
-refract::IElement* drafter::SourceMapToRefract(const mdp::CharactersRangeSet& sourceMap)
+std::unique_ptr<IElement> drafter::SourceMapToRefract(const mdp::CharactersRangeSet& sourceMap)
 {
-    refract::ArrayElement* sourceMapElement = new refract::ArrayElement;
+    auto sourceMapElement = make_element<ArrayElement>();
     sourceMapElement->element(SerializeKey::SourceMap);
 
-    refract::ArrayElement::ValueType ranges;
-    std::transform(sourceMap.begin(), sourceMap.end(), std::back_inserter(ranges), CharacterRangeToRefract);
+    std::transform(
+        sourceMap.begin(), sourceMap.end(), std::back_inserter(sourceMapElement->get()), CharacterRangeToRefract);
 
-    sourceMapElement->set(ranges);
-
-    refract::ArrayElement* element = new refract::ArrayElement;
-    element->push_back(sourceMapElement);
-
-    return element;
+    return CreateArrayElement(std::move(sourceMapElement));
 }

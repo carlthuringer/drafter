@@ -48,7 +48,7 @@ namespace refract
         void processMembers(const std::vector<refract::IElement*>& members,
             ArrayElement::ValueType& reqVals,
             std::vector<MemberElement*>& varProps,
-            RefractElements& oneOfMembers,
+            std::vector<IElement*>& oneOfMembers,
             ObjectElement* o);
 
     public:

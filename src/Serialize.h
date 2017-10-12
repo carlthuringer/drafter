@@ -50,13 +50,9 @@ namespace drafter
         {
         }
 
-        WrapperOptions(const bool generateSourceMap) : generateSourceMap(generateSourceMap), expandMSON(false)
-        {
-        }
+        WrapperOptions(const bool generateSourceMap) : generateSourceMap(generateSourceMap), expandMSON(false) {}
 
-        WrapperOptions() : generateSourceMap(false), expandMSON(false)
-        {
-        }
+        WrapperOptions() : generateSourceMap(false), expandMSON(false) {}
     };
 
     /**
@@ -184,20 +180,13 @@ namespace drafter
     std::pair<bool, T> LiteralTo(const mson::Literal&);
 
     template <>
-    std::pair<bool, bool> LiteralTo<bool>(const mson::Literal& literal);
+    std::pair<bool, refract::data::bool_t> LiteralTo<refract::data::bool_t>(const mson::Literal& literal);
     template <>
-    std::pair<bool, double> LiteralTo<double>(const mson::Literal& literal);
+    std::pair<bool, refract::data::number_t> LiteralTo<refract::data::number_t>(const mson::Literal& literal);
     template <>
-    std::pair<bool, std::string> LiteralTo<std::string>(const mson::Literal& literal);
+    std::pair<bool, refract::data::string_t> LiteralTo<refract::data::string_t>(const mson::Literal& literal);
 
-    refract::ArrayElement* CreateArrayElement(refract::IElement* value);
-
-    template <typename T>
-    refract::ArrayElement* CreateArrayElement(const T& content)
-    {
-        refract::IElement* value = refract::IElement::Create(content);
-        return CreateArrayElement(value);
-    }
+    std::unique_ptr<refract::ArrayElement> CreateArrayElement(std::unique_ptr<refract::IElement> value);
 
     /**
      * \brief functor pattern to translate _collection_ into sos::Array on serialization

@@ -17,13 +17,12 @@
 namespace refract
 {
 
-    class RenderJSONVisitor
+    class RenderJSONVisitor final
     {
-        IElement* result = nullptr;
+        std::unique_ptr<IElement> result = nullptr;
 
     public:
         RenderJSONVisitor() = default;
-        virtual ~RenderJSONVisitor();
 
         void operator()(const IElement& e);
         void operator()(const MemberElement& e);
@@ -45,7 +44,7 @@ namespace refract
         // void operator()(const SelectElement& e);
 
         std::string getString() const;
-        IElement* getOwnership();
+        std::unique_ptr<IElement> getOwnership();
     };
 }
 

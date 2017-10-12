@@ -200,7 +200,7 @@ namespace refract
         }
 
         if (str) {
-            IElement* desc = GetDescription(e);
+            const IElement* desc = GetDescription(e);
 
             if (desc) {
                 IElement* d = desc->clone();

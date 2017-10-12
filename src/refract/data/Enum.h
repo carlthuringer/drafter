@@ -26,10 +26,13 @@ namespace refract
         ///
         class enum_t final : public container_traits<enum_t, std::vector<std::unique_ptr<IElement> > >
         {
-            container_type elements_; //< sequence of Elements
-
         public:
+            using Data = std::unique_ptr<IElement>;
+
             static const char* name; //< syntactical name of the DSD
+
+        private:
+            Data value_ = nullptr;
 
         public:
             ///
@@ -38,19 +41,18 @@ namespace refract
             enum_t() = default;
 
             ///
-            /// Initialize an Enum DSD from its memory representation
-            /// @deprecated
+            /// Initialize an Enum DSD from its value
             ///
-            /// @param data     memory represenation
+            /// @param value     an Element
             ///
-            [[deprecated]] enum_t(container_type elements);
+            explicit enum_t(Data value);
 
             ///
             /// Initialize an Enum DSD from another by consuming its memory representation
             ///
             /// @param other   Enum DSD to be consumed
             ///
-            enum_t(enum_t&&) = default;
+            enum_t(enum_t&& other) = default;
 
             ///
             /// Initialize an Enum DSD from another by cloning its children
@@ -62,67 +64,34 @@ namespace refract
             ///
             /// Clear children and consume another Enum DSD's memory representation
             ///
-            /// @param other   Enum DSD to be consumed
+            /// @param rhs   Enum DSD to be consumed
             ///
-            enum_t& operator=(enum_t&&) = default;
+            enum_t& operator=(enum_t&& rhs) = default;
 
             ///
             /// Clear children and clone them from another Enum DSD
             ///
-            /// @param other   Enum DSD to be cloned from
+            /// @param rhs   Enum DSD to be cloned from
             ///
             enum_t& operator=(const enum_t& rhs);
 
             ~enum_t() = default;
 
         public:
-            ///
-            /// Get reference to memory representation
-            /// @deprecated
-            ///
-            [[deprecated]] const container_type& get() const noexcept
+            const IElement* value() const noexcept
             {
-                return elements_;
+                return value_.get();
             }
 
-        public: // iterators
-            auto begin() noexcept
-            {
-                return elements_.begin();
+            ///
+            /// Take ownership of the Element of this DSD
+            /// @remark sets Element to nullptr
+            ///
+            /// @return Element of this DSD
+            ///
+            Data claim() noexcept {
+                return std::move(value_);
             }
-            auto end() noexcept
-            {
-                return elements_.end();
-            }
-            auto begin() const noexcept
-            {
-                return elements_.begin();
-            }
-            auto end() const noexcept
-            {
-                return elements_.end();
-            }
-
-        public:
-            ///
-            /// Add a child Element
-            ///
-            /// @param it   where the element is to be added
-            /// @param el   Element to be consumed
-            ///
-            /// @return iterator to Element added
-            ///
-            iterator insert(const_iterator it, std::unique_ptr<IElement> el);
-
-            ///
-            /// Remove a subsequence of children
-            ///
-            /// @param b    iterator to the first Element to be removed
-            /// @param e    iterator following the last Element to be removed
-            ///
-            /// @return iterator following the last child removed
-            ///
-            iterator erase(const_iterator b, const_iterator e);
         };
     }
 }
