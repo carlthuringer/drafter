@@ -12,6 +12,7 @@
 #include <ostream>
 
 #include "ElementFwd.h"
+#include "ElementIfc.h"
 
 namespace refract
 {
@@ -31,7 +32,9 @@ namespace refract
         void printValues(const T& e, const char* name)
         {
             indented() << "- " << name << "Element\n";
-            for (const auto& v : e.value) {
+
+            assert(!e.empty());
+            for (const auto& v : e.get()) {
                 PrintVisitor{ indent + 1, os, ommitSourceMap }(*v);
             }
         }

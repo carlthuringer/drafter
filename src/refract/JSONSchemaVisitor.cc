@@ -18,16 +18,15 @@
 #include "JSONSchemaVisitor.h"
 #include "SerializeCompactVisitor.h"
 
-
 #include <assert.h>
 
 namespace refract
 {
 
-    template <typename T>
-    void CloneMembers(T* a, const RefractElements* val)
+    template <typename T, typename Collection>
+    void CloneMembers(T& a, const Collection& val)
     {
-        for (const auto& value : *val) {
+        for (const auto& value : val) {
 
             if ((value)->empty()) {
                 continue;
@@ -35,8 +34,7 @@ namespace refract
 
             RenderJSONVisitor v;
             Visit(v, *value);
-            IElement* e = v.getOwnership();
-            a->push_back(e);
+            a.push_back(v.getOwnership());
         }
     }
 
@@ -65,21 +63,12 @@ namespace refract
     }
 
     JSONSchemaVisitor::JSONSchemaVisitor(
-        ObjectElement* pDefinitions /*= nullptr*/, bool _fixed /*= false*/, bool _fixedType /*= false*/)
-        : pDefs(pDefinitions), fixed(_fixed), fixedType(_fixedType)
+        std::unique_ptr<ObjectElement> pDefinitions /*= nullptr*/, bool _fixed /*= false*/, bool _fixedType /*= false*/)
+        : pObj(make_element<ObjectElement>())
+        , pDefs(pDefinitions ? std::move(pDefinitions) : make_element<ObjectElement>())
+        , fixed(_fixed)
+        , fixedType(_fixedType)
     {
-        pObj = new ObjectElement;
-
-        if (!pDefs) {
-            pDefs = new ObjectElement;
-        }
-    }
-
-    JSONSchemaVisitor::~JSONSchemaVisitor()
-    {
-        if (nullptr != pObj) {
-            delete pObj;
-        }
     }
 
     void JSONSchemaVisitor::setFixed(bool _fixed)
@@ -112,7 +101,7 @@ namespace refract
 
     void JSONSchemaVisitor::setSchemaType(const std::string& type)
     {
-        addMember("type", new StringElement(type));
+        addMember("type", make_primitive(type));
     }
 
     void JSONSchemaVisitor::addSchemaType(const std::string& type)
@@ -122,30 +111,34 @@ namespace refract
         // already pushed types
         MemberElement* m = FindMemberByKey(*pObj, "type");
 
-        if (m && m->value.second) {
-            IElement* t = m->value.second;
-            ArrayElement* a = new ArrayElement;
-            a->push_back(t);
-            a->push_back(IElement::Create(type));
-            m->value.second = a;
-        } else {
-            setSchemaType(type);
+        if (m) {
+            assert(!m->empty());
+            if (auto t = m->get().claim()) {
+                auto a = make_element<ArrayElement>();
+                a->get().push_back(std::move(t));
+                a->get().push_back(make_primitive(type));
+                m->get().value(std::move(a));
+                return;
+            }
         }
+
+        setSchemaType(type);
     }
 
     void JSONSchemaVisitor::addNullToEnum()
     {
         MemberElement* m = FindMemberByKey(*pObj, "enum");
 
-        if (m && m->value.second) {
-            ArrayElement* a = TypeQueryVisitor::as<ArrayElement>(m->value.second);
-            a->push_back(new NullElement);
+        if (m && m->get().value()) {
+            ArrayElement* a = TypeQueryVisitor::as<ArrayElement>(m->get().value());
+            assert(a);
+            a->get().push_back(make_empty<NullElement>());
         }
     }
 
-    void JSONSchemaVisitor::addMember(const std::string& key, IElement* val)
+    void JSONSchemaVisitor::addMember(const std::string& key, std::unique_ptr<IElement> val)
     {
-        pObj->push_back(new MemberElement(key, val));
+        pObj->get().push_back(make_element<MemberElement>(key, std::move(val)));
     }
 
     bool JSONSchemaVisitor::allItemsEmpty(const ArrayElement::ValueType* val)
@@ -156,15 +149,15 @@ namespace refract
     template <typename T>
     void JSONSchemaVisitor::primitiveType(const T& e)
     {
-        const typename T::ValueType* value = GetValue<T>(e);
+        auto value = GetValue<T>(e);
 
         if (value) {
             setPrimitiveType(e);
 
             if (fixed) {
-                ArrayElement* a = new ArrayElement;
-                a->push_back(IElement::Create(*value));
-                addMember("enum", a);
+                auto a = make_element<ArrayElement>();
+                a->get().push_back(make_element<T>(value->get()));
+                addMember("enum", std::move(a));
             }
         }
     }
@@ -547,11 +540,9 @@ namespace refract
         return pObj;
     }
 
-    IElement* JSONSchemaVisitor::getOwnership()
+    std::unique_ptr<IElement> JSONSchemaVisitor::getOwnership()
     {
-        IElement* ret = pObj;
-        pObj = nullptr;
-        return ret;
+        return std::move(pObj);
     }
 
     std::string JSONSchemaVisitor::getSchema(const IElement& e)
@@ -586,14 +577,13 @@ namespace refract
     {
         std::set<std::string> required;
 
-        for (const auto& member: members) {
+        for (const auto& member : members) {
             if (!member) {
                 continue;
             }
 
             TypeQueryVisitor type;
             Visit(type, *member);
-
 
             switch (type.get()) {
                 case TypeQueryVisitor::Member: {
@@ -643,10 +633,8 @@ namespace refract
             }
         }
 
-        std::transform(required.begin(), required.end(),
-                std::back_inserter(reqVals), 
-                [](const std::string& value) {
-                    return IElement::Create(value);
-                });
+        std::transform(required.begin(), required.end(), std::back_inserter(reqVals), [](const std::string& value) {
+            return IElement::Create(value);
+        });
     }
 }

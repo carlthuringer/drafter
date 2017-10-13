@@ -28,7 +28,7 @@ namespace refract
                 return;
             }
 
-            for (auto const& item : *val) {
+            for (auto const& item : val->get()) {
 
                 if (!item || item->empty()) {
                     continue;
@@ -109,8 +109,9 @@ namespace refract
 
         const IElement* val = GetValue<EnumElement>()(e);
 
-        std::unique_ptr<IElement> value = (val && val->value() && !val->value()->empty()) ? //
-            val->value()->clone() :                                                         //
+        std::unique_ptr<IElement> value = //
+            (val && !val->empty()) ?      //
+            val->clone() :                //
             make_empty<StringElement>();
 
         RenderJSONVisitor renderer;
@@ -133,8 +134,8 @@ namespace refract
     template <typename T>
     std::unique_ptr<IElement> getResult(const T& e)
     {
-        const typename T::ValueType* v = GetValue<T>(e);
-        return v ? make_primitive(*v) : nullptr;
+        auto v = GetValue<T>{}(e);
+        return v ? make_element<T>(v->get()) : nullptr;
     }
 
     void RenderJSONVisitor::operator()(const StringElement& e)

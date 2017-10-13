@@ -9,24 +9,26 @@
 #ifndef REFRACT_JSONSCHEMAVISITOR_H
 #define REFRACT_JSONSCHEMAVISITOR_H
 
-#include "VisitorUtils.h"
-#include <string>
-
 #include "ElementFwd.h"
+#include "VisitorUtils.h"
+
+#include <memory>
+#include <string>
 
 namespace refract
 {
-    class JSONSchemaVisitor
+    class JSONSchemaVisitor final
     {
-        ObjectElement* pObj;
-        ObjectElement* pDefs;
+        std::unique_ptr<ObjectElement> pObj;
+        std::unique_ptr<ObjectElement> pDefs;
+
         bool fixed;
         bool fixedType;
 
         void setSchemaType(const std::string& type);
         void addSchemaType(const std::string& type);
         void addNullToEnum();
-        void addMember(const std::string& key, IElement* val);
+        void addMember(const std::string& key, std::unique_ptr<IElement> val);
         void anyOf(std::map<std::string, std::vector<IElement*> >& types, std::vector<std::string>& typesOrder);
         bool allItemsEmpty(const ArrayElement::ValueType* val);
         ObjectElement* definitionFromVariableProperty(JSONSchemaVisitor& renderer);
@@ -52,8 +54,9 @@ namespace refract
             ObjectElement* o);
 
     public:
-        JSONSchemaVisitor(ObjectElement* pDefinitions = NULL, bool _fixed = false, bool _fixedType = false);
-        ~JSONSchemaVisitor();
+        JSONSchemaVisitor(
+            std::unique_ptr<ObjectElement> pDefinitions = nullptr, bool _fixed = false, bool _fixedType = false);
+
         void setFixed(bool _fixed);
         void setFixedType(bool _fixedType);
         void operator()(const IElement& e);
@@ -71,7 +74,7 @@ namespace refract
         void operator()(const OptionElement& e);
 
         IElement* get();
-        IElement* getOwnership();
+        std::unique_ptr<IElement> getOwnership();
         std::string getSchema(const IElement& e);
     };
 }

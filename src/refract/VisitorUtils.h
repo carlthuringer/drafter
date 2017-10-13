@@ -141,7 +141,7 @@ namespace refract
             {
                 const auto& value = element.get();
                 if (value.value()) {
-                    return &value;
+                    return value.value();
                 }
             }
 
@@ -155,13 +155,13 @@ namespace refract
                         // We need to hadle Enum individualy because of attr["enumerations"]
                         if (const EnumElement* val = TypeQueryVisitor::as<const EnumElement>(item.get())) {
                             auto ret = operator()(*val);
-                            if (ret && ret->value()) {
+                            if (ret) {
                                 return ret;
                             }
                         }
 
                         if (!item->empty()) {
-                            return data::enum_t{item};
+                            return item.get();
                         }
                     }
                 }
