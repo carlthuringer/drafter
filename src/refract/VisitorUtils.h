@@ -93,7 +93,7 @@ namespace refract
     template <typename T, typename R = typename T::ValueType>
     struct GetValue {
 
-        const R* operator()(const T& element) const
+        const T* operator()(const T& element) const
         {
             // FIXME: if value is propageted as first
             // following example will be rendered w/ empty members
@@ -107,28 +107,28 @@ namespace refract
             // ```
             // because `o` has members `m1` and  `m2` , but members has no sed value
             if (!element.empty()) {
-                return &element.get();
+                return &element;
             }
 
             if (const T* s = GetSample(element)) {
-                return &s->get();
+                return s;
             }
 
             if (const T* d = GetDefault(element)) {
-                return &d->get();
+                return d;
             }
 
             if (element.empty() && IsTypeAttribute(element, "nullable")) {
                 return nullptr;
             }
 
-            return &element.get();
+            return &element;
         }
     };
 
     template <typename ValueType>
     struct GetValue<refract::EnumElement, ValueType> {
-        const ValueType* operator()(const EnumElement& element) const
+        const IElement* operator()(const EnumElement& element) const
         {
             if (const EnumElement* s = GetSample(element)) {
                 return operator()(*s);
@@ -161,7 +161,7 @@ namespace refract
                         }
 
                         if (!item->empty()) {
-                            return item.get();
+                            return data::enum_t{item};
                         }
                     }
                 }

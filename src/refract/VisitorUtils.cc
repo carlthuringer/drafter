@@ -40,7 +40,7 @@ namespace refract
                 if (key.empty()) {
                     auto k = GetValue<const StringElement>()(*str);
                     if (k) {
-                        key = *k;
+                        key = k->get();
                     }
                 }
 

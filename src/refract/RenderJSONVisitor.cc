@@ -107,7 +107,7 @@ namespace refract
     void RenderJSONVisitor::operator()(const EnumElement& e)
     {
 
-        const data::enum_t* val = GetValue<EnumElement>()(e);
+        const IElement* val = GetValue<EnumElement>()(e);
 
         std::unique_ptr<IElement> value = (val && val->value() && !val->value()->empty()) ? //
             val->value()->clone() :                                                         //
