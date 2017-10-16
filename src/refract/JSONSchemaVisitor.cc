@@ -7,18 +7,20 @@
 //  Copyright (c) 2015, 2016 Apiary Inc. All rights reserved.
 //
 
+#include "JSONSchemaVisitor.h"
+
+#include "Exception.h"
+#include "RenderJSONVisitor.h"
+#include "RenderJSONVisitor.h"
+#include "SerializeCompactVisitor.h"
 #include "VisitorUtils.h"
 #include "sosJSON.h"
-#include <sstream>
+
+#include <cassert>
 #include <iostream>
 #include <map>
 #include <set>
-
-#include "RenderJSONVisitor.h"
-#include "JSONSchemaVisitor.h"
-#include "SerializeCompactVisitor.h"
-
-#include <assert.h>
+#include <sstream>
 
 namespace refract
 {
@@ -63,7 +65,7 @@ namespace refract
     }
 
     JSONSchemaVisitor::JSONSchemaVisitor(
-        std::unique_ptr<ObjectElement> pDefinitions /*= nullptr*/, bool _fixed /*= false*/, bool _fixedType /*= false*/)
+        std::shared_ptr<ObjectElement> pDefinitions /*= nullptr*/, bool _fixed /*= false*/, bool _fixedType /*= false*/)
         : pObj(make_element<ObjectElement>())
         , pDefs(pDefinitions ? std::move(pDefinitions) : make_element<ObjectElement>())
         , fixed(_fixed)
@@ -171,33 +173,30 @@ namespace refract
     {
         JSONSchemaVisitor renderer(pDefs);
 
-        if (e.value.second) {
+        const auto& content = e.get();
+
+        if (auto val = content.value()) {
             if (IsTypeAttribute(e, "fixed") || fixed) {
                 renderer.setFixed(true);
             }
 
             renderer.setFixedType(IsTypeAttribute(e, "fixedType"));
-            Visit(renderer, *e.value.second);
+            Visit(renderer, *val);
         }
 
-        StringElement* str = TypeQueryVisitor::as<StringElement>(e.value.first);
-        ExtendElement* ext = TypeQueryVisitor::as<ExtendElement>(e.value.first);
+        const StringElement* str = TypeQueryVisitor::as<const StringElement>(content.key());
+        const ExtendElement* ext = TypeQueryVisitor::as<const ExtendElement>(content.key());
 
-        if (ext) {
-            IElement* merged = ext->merge();
-            str = TypeQueryVisitor::as<StringElement>(merged);
+        std::unique_ptr<IElement> merged = ext ? ext->get().merge() : nullptr;
 
-            if (!str) {
-                delete merged;
-            }
-        }
+        if (merged)
+            str = TypeQueryVisitor::as<StringElement>(merged.get());
 
         if (str) {
             const IElement* desc = GetDescription(e);
 
             if (desc) {
-                IElement* d = desc->clone();
-                renderer.addMember("description", d);
+                renderer.addMember("description", desc->clone());
             }
 
             if (IsTypeAttribute(e, "nullable")) {
@@ -205,86 +204,106 @@ namespace refract
                 renderer.addNullToEnum();
             }
 
+            const auto val = content.value();
+
             // Check for primitive types
-            StringElement* strSecond = TypeQueryVisitor::as<StringElement>(e.value.second);
-            NumberElement* numSecond = TypeQueryVisitor::as<NumberElement>(e.value.second);
-            BooleanElement* boolSecond = TypeQueryVisitor::as<BooleanElement>(e.value.second);
+            auto s = TypeQueryVisitor::as<const StringElement>(val);
+            auto n = TypeQueryVisitor::as<const NumberElement>(val);
+            auto b = TypeQueryVisitor::as<const BooleanElement>(val);
 
-            if (e.value.second && (strSecond || numSecond || boolSecond)) {
-                auto defaultIt = e.value.second->attributes.find("default");
+            if (val && (s || n || b)) {
+                auto defaultIt = val->attributes().find("default");
 
-                if (defaultIt != e.value.second->attributes.end()) {
-                    renderer.addMember("default", (*defaultIt)->clone());
+                if (defaultIt != val->attributes().end()) {
+                    assert(defaultIt->second);
+                    renderer.addMember("default", defaultIt->second->clone());
                 }
             }
 
-            addMember(str->value, renderer.getOwnership());
+            addMember(str->get(), renderer.getOwnership());
         } else {
             throw LogicError("A property's key in the object is not of type string");
         }
+    }
 
-        if (ext && str) {
-            delete str; // if Extend -> remove resolved (merged) element
+    std::unique_ptr<ObjectElement> JSONSchemaVisitor::definitionFromVariableProperty(JSONSchemaVisitor& renderer)
+    {
+        auto definition = make_element<ObjectElement>();
+        auto& content = definition->get();
+
+        content.push_back(make_element<MemberElement>("type", make_element<StringElement>("object")));
+
+        {
+            auto obj = make_element<ObjectElement>();
+            obj->get().push_back(make_element<MemberElement>("", renderer.getOwnership()));
+
+            content.push_back(make_element<MemberElement>("patternProperties", std::move(obj)));
         }
+
+        return std::move(definition);
     }
 
-    ObjectElement* JSONSchemaVisitor::definitionFromVariableProperty(JSONSchemaVisitor& renderer)
+    std::unique_ptr<ArrayElement> JSONSchemaVisitor::arrayFromProps(std::vector<MemberElement*>& props)
     {
-        ObjectElement* definition = new ObjectElement();
+        if (props.empty()) {
+            return make_empty<ArrayElement>();
 
-        definition->push_back(new MemberElement("type", new StringElement("object")));
+        } else {
+            auto result = make_element<ArrayElement>();
+            auto& content = result->get();
 
-        definition->push_back(
-            new MemberElement("patternProperties", new ObjectElement(new MemberElement("", renderer.getOwnership()))));
+            for (auto const& prop : props) {
 
-        return definition;
-    }
+                const StringElement* str = TypeQueryVisitor::as<const StringElement>(prop->get().key());
 
-    ArrayElement* JSONSchemaVisitor::arrayFromProps(std::vector<MemberElement*>& props)
-    {
-        ArrayElement* a = new ArrayElement;
+                if (str) {
+                    bool fixedType = IsTypeAttribute(*prop, "fixedType");
+                    JSONSchemaVisitor renderer(pDefs, fixed, fixedType);
+                    Visit(renderer, *prop->get().value());
 
-        for (auto const& prop : props) {
+                    pDefs->get().push_back(
+                        make_element<MemberElement>(str->get(), definitionFromVariableProperty(renderer)));
 
-            StringElement* str = TypeQueryVisitor::as<StringElement>(prop->value.first);
+                    {
+                        using namespace std::string_literals;
 
-            if (str) {
-                bool fixedType = IsTypeAttribute(*prop, "fixedType");
-                JSONSchemaVisitor renderer(pDefs, fixed, fixedType);
-                Visit(renderer, *prop->value.second);
-
-                pDefs->push_back(new MemberElement(str->value, definitionFromVariableProperty(renderer)));
-
-                a->push_back(
-                    new ObjectElement(new MemberElement("$ref", new StringElement("#/definitions/" + str->value))));
+                        auto obj = make_element<ObjectElement>();
+                        obj->get().push_back(make_element<MemberElement>(
+                            "$ref", make_element<StringElement>("#/definitions/" + str->get().get())));
+                        content.push_back(std::move(obj));
+                    }
+                }
             }
-        }
 
-        return a;
+            return std::move(result);
+        }
     }
 
-    void JSONSchemaVisitor::addVariableProps(std::vector<MemberElement*>& props, ObjectElement* o)
+    void JSONSchemaVisitor::addVariableProps(std::vector<MemberElement*>& props, std::unique_ptr<ObjectElement> o)
     {
         if (o->empty() && props.size() == 1) {
-            StringElement* str = TypeQueryVisitor::as<StringElement>(props[0]->value.first);
+            StringElement* str = TypeQueryVisitor::as<StringElement>(props[0]->get().key());
 
             if (str) {
                 bool fixedType = IsTypeAttribute(*props.front(), "fixedType");
                 JSONSchemaVisitor renderer(pDefs, fixed, fixedType);
-                Visit(renderer, *props.front()->value.second);
+                Visit(renderer, *props.front()->get().value());
 
-                pDefs->push_back(new MemberElement(str->value, definitionFromVariableProperty(renderer)));
+                pDefs->get().push_back(
+                    make_element<MemberElement>(str->get(), definitionFromVariableProperty(renderer)));
 
-                addMember("$ref", new StringElement("#/definitions/" + str->value));
+                addMember("$ref", make_element<StringElement>("#/definitions/" + str->get().get()));
             }
         } else {
-            ArrayElement* a = arrayFromProps(props);
+            auto a = arrayFromProps(props);
 
             if (!o->empty()) {
-                a->push_back(new ObjectElement(new MemberElement("properties", o)));
+                auto obj = make_element<ObjectElement>();
+                obj->get().push_back(make_element<MemberElement>("properties", std::move(o)));
+                a->get().push_back(std::move(obj));
             }
 
-            addMember("allOf", a);
+            addMember("allOf", std::move(a));
         }
     }
 
@@ -293,10 +312,9 @@ namespace refract
         ObjectElement::ValueType val;
         IncludeMembers(e, val);
 
-        ObjectElement* o = new ObjectElement;
         ArrayElement::ValueType reqVals;
         std::vector<MemberElement*> varProps;
-        RefractElements oneOfMembers;
+        ArrayElement::ValueType oneOfMembers;
 
         if (IsTypeAttribute(e, "fixed")) {
             fixed = true;
@@ -306,69 +324,79 @@ namespace refract
             fixedType = true;
         }
 
-        processMembers(val, reqVals, varProps, oneOfMembers, o);
+        {
+            auto o = make_empty<ObjectElement>();
 
-        if (!varProps.empty()) {
-            addVariableProps(varProps, o);
-            if (o->value.empty()) {
-                delete o;
+            processMembers(val, reqVals, varProps, oneOfMembers, *o);
+
+            if (!varProps.empty()) {
+                addVariableProps(varProps, std::move(o));
+            } else {
+                setSchemaType("object");
+                addMember("properties", std::move(o));
             }
-        } else {
-            setSchemaType("object");
-            addMember("properties", o);
         }
 
         if (!reqVals.empty()) {
-            addMember("required", new ArrayElement(reqVals));
+            addMember("required", make_element<ArrayElement>(std::move(reqVals)));
         }
 
         if (!oneOfMembers.empty()) {
-            addMember("oneOf", new ArrayElement(oneOfMembers));
+            addMember("oneOf", make_element<ArrayElement>(std::move(oneOfMembers)));
         }
 
         if (fixed || fixedType) {
-            addMember("additionalProperties", IElement::Create(false));
+            addMember("additionalProperties", make_primitive(false));
         }
     }
 
     void JSONSchemaVisitor::anyOf(
-        std::map<std::string, std::vector<IElement*> >& types, std::vector<std::string>& typesOrder)
+        std::map<std::string, std::vector<const IElement*> >& types, std::vector<std::string>& typesOrder)
     {
-        ArrayElement* a = new ArrayElement;
+        if (typesOrder.empty()) {
+            addMember("anyOf", make_empty<ArrayElement>());
 
-        for (auto const& item : typesOrder) {
+        } else {
+            auto a = make_element<ArrayElement>();
 
-            const std::vector<IElement*>& items = types[item];
+            for (auto const& item : typesOrder) {
 
-            IElement* elm = items.front();
-            JSONSchemaVisitor v(pDefs);
-            Visit(v, *elm);
+                const auto& items = types[item];
 
-            if (TypeQueryVisitor::as<EnumElement>(elm)) {
-                v.addMember("enum", elm->clone());
-            } else if (!TypeQueryVisitor::as<ObjectElement>(elm)) {
-                ArrayElement::ValueType enmVals;
-                CloneMembers(&enmVals, &items);
+                const IElement* elm = items.front();
+                JSONSchemaVisitor v(pDefs);
+                Visit(v, *elm);
 
-                if (!enmVals.empty()) {
-                    ArrayElement* enm = new ArrayElement;
-                    enm->set(enmVals);
-                    v.addMember("enum", enm);
+                if (TypeQueryVisitor::as<EnumElement>(elm)) {
+                    v.addMember("enum", elm->clone());
+                } else if (!TypeQueryVisitor::as<ObjectElement>(elm)) {
+                    data::array_t enmVals;
+
+                    CloneMembers(enmVals, items);
+
+                    if (!enmVals.empty()) {
+                        v.addMember("enum", make_element<ArrayElement>(std::move(enmVals)));
+                    }
                 }
-            }
 
-            a->push_back(v.getOwnership());
+                a->get().push_back(v.getOwnership());
+            }
+            addMember("anyOf", std::move(a));
         }
-        addMember("anyOf", a);
     }
 
     void JSONSchemaVisitor::operator()(const ArrayElement& e)
     {
-        const ArrayElement::ValueType* val = GetValue<ArrayElement>(e);
+        const ArrayElement* v = GetValue<ArrayElement>{}(e);
 
-        if (!val || val->empty()) {
+        if (!v)
             return;
-        }
+        if (v->empty())
+            return;
+
+        const auto& val = v->get();
+        if (val.empty())
+            return;
 
         JSONSchemaVisitor renderer(pDefs);
         setSchemaType("array");
@@ -382,10 +410,10 @@ namespace refract
         }
 
         if (fixed || fixedType) {
-            ArrayElement::ValueType av;
-            bool allEmpty = allItemsEmpty(val);
+            data::array_t av;
+            bool allEmpty = allItemsEmpty(&val);
 
-            for (auto const& value : *val) {
+            for (auto const& value : val) {
 
                 assert(value);
                 if (!value) {
@@ -404,12 +432,14 @@ namespace refract
 
             if (!av.empty()) {
                 if (av.size() == 1) {
-                    addMember("items", av[0]);
+                    addMember("items", std::move(av.begin()[0]));
 
+                    assert(av.size() == 1);
+                    assert(!av.begin()[0]);
+
+                    av.clear();
                 } else {
-                    ArrayElement* a = new ArrayElement;
-                    a->set(av);
-                    addMember("items", a);
+                    addMember("items", make_element<ArrayElement>(std::move(av)));
                 }
             }
         }
@@ -417,38 +447,37 @@ namespace refract
         const ArrayElement* def = GetDefault(e);
 
         if (def && !def->empty()) {
-            ArrayElement* d = static_cast<ArrayElement*>(def->clone());
-            addMember("default", d);
+            addMember("default", clone(*def));
         }
     }
 
     void JSONSchemaVisitor::operator()(const EnumElement& e)
     {
 
-        RefractElements elms;
+        std::vector<const IElement*> elms;
 
-        const auto& it = e.attributes.find("enumerations");
-        if (it != e.attributes.end()) {
-            if (ArrayElement* enums = TypeQueryVisitor::as<ArrayElement>((*it)->value.second)) {
-                elms.insert(elms.end(), enums->value.begin(), enums->value.end());
+        const auto& it = e.attributes().find("enumerations");
+        if (it != e.attributes().end()) {
+            if (const ArrayElement* enums = TypeQueryVisitor::as<const ArrayElement>(it->second.get())) {
+                elms.insert(elms.end(), enums->get().begin(), enums->get().end());
             }
         }
 
-        if (e.value) {
-            elms.push_back(e.value);
+        if (auto v = e.get().value()) {
+            elms.push_back(v);
         }
 
         if (elms.empty()) {
             return;
         }
 
-        std::map<std::string, std::vector<IElement*> > types;
+        std::map<std::string, std::vector<const IElement*> > types;
         std::vector<std::string> typesOrder;
 
         for (const auto& enumeration : elms) {
 
             if (enumeration) {
-                std::vector<IElement*>& items = types[enumeration->element()];
+                auto& items = types[enumeration->element()];
 
                 if (items.empty()) {
                     typesOrder.push_back(enumeration->element());
@@ -463,10 +492,10 @@ namespace refract
         } else {
             const EnumElement* def = GetDefault(e);
             if (!elms.empty() || (def && !def->empty())) {
-                ArrayElement* a = new ArrayElement;
+                auto a = make_element<ArrayElement>();
                 CloneMembers(a, &elms);
                 setSchemaType(types.begin()->first);
-                addMember("enum", a);
+                addMember("enum", std::move(a));
             }
         }
 
@@ -474,15 +503,14 @@ namespace refract
 
         // this works because "default" is everytime set by value
         // if value will be moved into "enumerations" it need aditional check
-        if (def && !def->empty() && !def->value->empty()) {
-            IElement* d = def->value->clone();
-            addMember("default", d);
+        if (def && !def->empty() && !def->get().value()->empty()) {
+            addMember("default", def->get().value()->clone());
         }
     }
 
     void JSONSchemaVisitor::operator()(const NullElement& e)
     {
-        addMember("type", new NullElement);
+        addMember("type", make_empty<NullElement>());
     }
 
     void JSONSchemaVisitor::operator()(const StringElement& e)
@@ -502,42 +530,41 @@ namespace refract
 
     void JSONSchemaVisitor::operator()(const ExtendElement& e)
     {
-        IElement* merged = e.merge();
+        auto merged = e.get().merge();
         if (!merged) {
             return;
         }
 
         Visit(*this, *merged);
-        delete merged;
     }
 
     void JSONSchemaVisitor::operator()(const OptionElement& e)
     {
-        ObjectElement* props = pObj;
-        RefractElements members;
-        ArrayElement::ValueType reqVals;
+        data::option_t members;
+        data::array_t reqVals;
         std::vector<MemberElement*> varProps; // TODO: Add variable properties processing
-        RefractElements oneOfMembers;
+        data::array_t oneOfMembers;
         IncludeMembers(e, members);
 
-        processMembers(members, reqVals, varProps, oneOfMembers, props);
+        auto props = std::move(pObj);
+        processMembers(members, reqVals, varProps, oneOfMembers, *props);
 
-        pObj = new ObjectElement;
+        pObj = make_element<ObjectElement>();
 
-        addMember("properties", props);
+        addMember("properties", std::move(props));
 
         if (!reqVals.empty()) {
-            addMember("required", new ArrayElement(reqVals));
+            addMember("required", make_element<ArrayElement>(std::move(reqVals)));
         }
 
         if (!oneOfMembers.empty()) {
-            addMember("oneOf", new ArrayElement(oneOfMembers));
+            addMember("oneOf", make_element<ArrayElement>(std::move(oneOfMembers)));
         }
     }
 
     IElement* JSONSchemaVisitor::get()
     {
-        return pObj;
+        return pObj.get();
     }
 
     std::unique_ptr<IElement> JSONSchemaVisitor::getOwnership()
@@ -547,15 +574,16 @@ namespace refract
 
     std::string JSONSchemaVisitor::getSchema(const IElement& e)
     {
-        addMember("$schema", new StringElement("http://json-schema.org/draft-04/schema#"));
+        addMember("$schema", make_element<StringElement>("http://json-schema.org/draft-04/schema#"));
         setSchemaType("object");
 
         Visit(*this, e);
 
         if (!pDefs->empty()) {
-            addMember("definitions", pDefs);
+            assert(pDefs.unique());
+            addMember("definitions", std::unique_ptr<IElement>(pDefs.release()));
         } else {
-            delete pDefs;
+            pDefs = nullptr;
         }
 
         sos::SerializeJSON s;
@@ -569,72 +597,64 @@ namespace refract
         return ss.str();
     }
 
-    void JSONSchemaVisitor::processMembers(const std::vector<refract::IElement*>& members,
-        ArrayElement::ValueType& reqVals,
+    void JSONSchemaVisitor::processMember(const IElement& member,
         std::vector<MemberElement*>& varProps,
-        RefractElements& oneOfMembers,
-        ObjectElement* o)
+        data::array_t& oneOfMembers,
+        ObjectElement& o,
+        std::set<std::string>& required)
     {
-        std::set<std::string> required;
-
-        for (const auto& member : members) {
-            if (!member) {
-                continue;
-            }
-
-            TypeQueryVisitor type;
-            Visit(type, *member);
-
-            switch (type.get()) {
-                case TypeQueryVisitor::Member: {
-                    MemberElement* mr = static_cast<MemberElement*>(member);
-
-                    if (IsTypeAttribute(*member, "required") || IsTypeAttribute(*member, "fixed")
-                        || ((fixed || fixedType) && !IsTypeAttribute(*member, "optional"))) {
-
-                        StringElement* str = TypeQueryVisitor::as<StringElement>(mr->value.first);
-
-                        if (str) {
-                            required.insert(str->value);
-                        }
-                    }
-
-                    if (IsVariableProperty(*mr->value.first)) {
-                        varProps.push_back(mr);
-                    } else {
-                        JSONSchemaVisitor renderer(pDefs, fixed);
-                        Visit(renderer, *member);
-                        ObjectElement* o1 = TypeQueryVisitor::as<ObjectElement>(renderer.get());
-
-                        if (!o1->value.empty()) {
-                            MemberElement* m1 = TypeQueryVisitor::as<MemberElement>(o1->value[0]->clone());
-
-                            if (m1) {
-                                o->push_back(m1);
-                            }
-                        }
-                    }
-                } break;
-
-                case TypeQueryVisitor::Select: {
-                    SelectElement* sel = static_cast<SelectElement*>(member);
-
-                    // FIXME: there is no valid solution for multiple "SelectElement" in one object.
-
-                    for (auto const& select : sel->value) {
-                        JSONSchemaVisitor v(pDefs);
-                        VisitBy(*select, v);
-                        oneOfMembers.push_back(v.getOwnership());
-                    }
-                } break;
-
-                default:
-                    throw LogicError("Invalid member type of object in MSON definition");
-            }
+        if (!member) {
+            continue;
         }
 
-        std::transform(required.begin(), required.end(), std::back_inserter(reqVals), [](const std::string& value) {
-            return IElement::Create(value);
-        });
+        TypeQueryVisitor type;
+        Visit(type, *member);
+
+        switch (type.get()) {
+            case TypeQueryVisitor::Member: {
+                MemberElement* mr = static_cast<MemberElement*>(member);
+
+                if (IsTypeAttribute(*member, "required") || IsTypeAttribute(*member, "fixed")
+                    || ((fixed || fixedType) && !IsTypeAttribute(*member, "optional"))) {
+
+                    StringElement* str = TypeQueryVisitor::as<StringElement>(mr->value.first);
+
+                    if (str) {
+                        required.insert(str->value);
+                    }
+                }
+
+                if (IsVariableProperty(*mr->value.first)) {
+                    varProps.push_back(mr);
+                } else {
+                    JSONSchemaVisitor renderer(pDefs, fixed);
+                    Visit(renderer, *member);
+                    ObjectElement* o1 = TypeQueryVisitor::as<ObjectElement>(renderer.get());
+
+                    if (!o1->value.empty()) {
+                        MemberElement* m1 = TypeQueryVisitor::as<MemberElement>(o1->value[0]->clone());
+
+                        if (m1) {
+                            o->push_back(m1);
+                        }
+                    }
+                }
+            } break;
+
+            case TypeQueryVisitor::Select: {
+                SelectElement* sel = static_cast<SelectElement*>(member);
+
+                // FIXME: there is no valid solution for multiple "SelectElement" in one object.
+
+                for (auto const& select : sel->value) {
+                    JSONSchemaVisitor v(pDefs);
+                    VisitBy(*select, v);
+                    oneOfMembers.push_back(v.getOwnership());
+                }
+            } break;
+
+            default:
+                throw LogicError("Invalid member type of object in MSON definition");
+        }
     }
 }

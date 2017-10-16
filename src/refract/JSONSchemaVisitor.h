@@ -14,13 +14,15 @@
 
 #include <memory>
 #include <string>
+#include <map>
+#include <set>
 
 namespace refract
 {
     class JSONSchemaVisitor final
     {
         std::unique_ptr<ObjectElement> pObj;
-        std::unique_ptr<ObjectElement> pDefs;
+        std::shared_ptr<ObjectElement> pDefs;
 
         bool fixed;
         bool fixedType;
@@ -29,11 +31,11 @@ namespace refract
         void addSchemaType(const std::string& type);
         void addNullToEnum();
         void addMember(const std::string& key, std::unique_ptr<IElement> val);
-        void anyOf(std::map<std::string, std::vector<IElement*> >& types, std::vector<std::string>& typesOrder);
+        void anyOf(std::map<std::string, std::vector<const IElement*> >& types, std::vector<std::string>& typesOrder);
         bool allItemsEmpty(const ArrayElement::ValueType* val);
-        ObjectElement* definitionFromVariableProperty(JSONSchemaVisitor& renderer);
-        void addVariableProps(std::vector<MemberElement*>& props, ObjectElement* o);
-        ArrayElement* arrayFromProps(std::vector<MemberElement*>& props);
+        std::unique_ptr<ObjectElement> definitionFromVariableProperty(JSONSchemaVisitor& renderer);
+        void addVariableProps(std::vector<MemberElement*>& props, std::unique_ptr<ObjectElement> o);
+        std::unique_ptr<ArrayElement> arrayFromProps(std::vector<MemberElement*>& props);
 
         template <typename T>
         void setPrimitiveType(const T& e)
@@ -47,15 +49,35 @@ namespace refract
         template <typename T>
         void primitiveType(const T& e);
 
-        void processMembers(const std::vector<refract::IElement*>& members,
+        void processMember(const IElement& member,
+            std::vector<MemberElement*>& varProps,
+            data::array_t& oneOfMembers,
+            ObjectElement& o,
+            std::set<std::string>& required);
+
+        template <typename ContentT>
+        void processMembers(const ContentT& members,
             ArrayElement::ValueType& reqVals,
             std::vector<MemberElement*>& varProps,
-            std::vector<IElement*>& oneOfMembers,
-            ObjectElement* o);
+            data::array_t& oneOfMembers,
+            ObjectElement& o)
+        {
+            std::set<std::string> required;
+
+            for (const auto& member : members) {
+                if (!member)
+                    continue;
+                processMember(*member, varProps, oneOfMembers, o);
+            }
+
+            std::transform(required.begin(), required.end(), std::back_inserter(reqVals), [](const std::string& value) {
+                return make_primitive(value);
+            });
+        }
 
     public:
         JSONSchemaVisitor(
-            std::unique_ptr<ObjectElement> pDefinitions = nullptr, bool _fixed = false, bool _fixedType = false);
+            std::shared_ptr<ObjectElement> pDefinitions = nullptr, bool _fixed = false, bool _fixedType = false);
 
         void setFixed(bool _fixed);
         void setFixedType(bool _fixedType);
