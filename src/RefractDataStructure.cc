@@ -1295,7 +1295,7 @@ std::unique_ptr<IElement> drafter::MSONToRefract(
     }
 }
 
-std::unique_ptr<IElement> ExpandRefract(std::unique_ptr<IElement> element, ConversionContext& context)
+std::unique_ptr<IElement> drafter::ExpandRefract(std::unique_ptr<IElement> element, ConversionContext& context)
 {
     if (!element) {
         return nullptr;
@@ -1311,7 +1311,7 @@ std::unique_ptr<IElement> ExpandRefract(std::unique_ptr<IElement> element, Conve
     return std::move(element);
 }
 
-sos::Object SerializeRefract(const IElement* element, ConversionContext& context)
+sos::Object drafter::SerializeRefract(const IElement* element, ConversionContext& context)
 {
     if (!element) {
         return sos::Object();

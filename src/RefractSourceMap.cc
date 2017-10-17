@@ -26,3 +26,18 @@ std::unique_ptr<IElement> drafter::SourceMapToRefract(const mdp::CharactersRange
 
     return CreateArrayElement(std::move(sourceMapElement));
 }
+
+std::unique_ptr<refract::StringElement> drafter::LiteralToRefract(
+    const NodeInfo<std::string>& literal, ConversionContext& context)
+{
+    std::pair<bool, data::string_t> parsed = LiteralTo<data::string_t>(*literal.node);
+
+    auto element = refract::make_empty<refract::StringElement>();
+    if (parsed.first) {
+        element->set(parsed.second);
+    }
+
+    AttachSourceMap(*element, literal);
+
+    return std::move(element);
+}

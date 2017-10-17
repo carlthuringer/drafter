@@ -35,19 +35,7 @@ namespace drafter
     class ConversionContext;
 
     std::unique_ptr<refract::StringElement> LiteralToRefract(
-        const NodeInfo<std::string>& literal, ConversionContext& context)
-    {
-        std::pair<bool, std::string> parsed = LiteralTo<std::string>(*literal.node);
-
-        auto element = refract::make_empty<refract::StringElement>();
-        if (parsed.first) {
-            element->set(parsed.second);
-        }
-
-        AttachSourceMap(*element, literal);
-
-        return std::move(element);
-    }
+        const NodeInfo<std::string>& literal, ConversionContext& context);
 }
 
 #endif // #ifndef DRAFTER_REFRACTSOURCEMAP_H

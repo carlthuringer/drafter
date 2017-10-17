@@ -284,6 +284,7 @@
         "src/refract/ElementFwd.h",
         "src/refract/ElementIfc.h",
         "src/refract/Element.h",
+        "src/refract/Element.cc",
         "src/refract/TypeQueryVisitor.h",
         "src/refract/TypeQueryVisitor.cc",
         "src/refract/VisitorUtils.h",
