@@ -12,7 +12,6 @@
 #include "ElementMock.h"
 
 using namespace refract;
-using namespace experimental;
 using namespace data;
 
 TEST_CASE("`array_t`'s default element name is `array`", "[Element][array_t]")

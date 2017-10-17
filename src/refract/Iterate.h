@@ -41,12 +41,12 @@ namespace refract
             struct Impl<U, IsIterable, true> {
                 void operator()(IApply* apply, Visitor& v, const U& e)
                 {
-                    if (e.first) {
-                        e.first->content(v);
+                    if (auto key = e.key()) {
+                        key->content(v);
                     }
 
-                    if (e.second) {
-                        e.second->content(v);
+                    if (auto value = e.value()) {
+                        value->content(v);
                     }
                 }
             };
@@ -54,7 +54,7 @@ namespace refract
             void operator()(IApply* apply, Visitor& iterable, const T& e)
             {
                 apply->visit(e);
-                Impl<V>()(apply, iterable, e.value);
+                Impl<V>()(apply, iterable, e.get());
             }
         };
 

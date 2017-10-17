@@ -37,9 +37,14 @@ namespace
     };
 }
 
-bool refract::isReserved(const char* w)
+bool refract::isReserved(const char* w) noexcept
 {
     return std::binary_search(reserved_.begin(), reserved_.end(), w, [](const char* first, const char* second) {
         return (0 > std::strcmp(first, second));
     });
+}
+
+bool refract::isReserved(const std::string& w) noexcept
+{
+    return isReserved(w.c_str());
 }

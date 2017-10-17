@@ -3,7 +3,6 @@
 #include "Visitor.h"
 #include "Element.h"
 #include "Query.h"
-#include "Build.h"
 #include "Iterate.h"
 #include "FilterVisitor.h"
 
@@ -29,9 +28,7 @@ struct Functor {
     int GCounter;
     int SCounter;
 
-    Functor() : GCounter(0), SCounter(0)
-    {
-    }
+    Functor() : GCounter(0), SCounter(0) {}
 
     void operator()(const refract::IElement& e)
     {
@@ -88,14 +85,16 @@ TEST_CASE("It should invoke Functor for member of container elements", "[Visitor
     Functor f;
     refract::Visitor v(f);
 
-    refract::IElement* e
-        = Build(new ArrayElement)(IElement::Create(3))(IElement::Create(false))(IElement::Create("Ehlo"));
+    auto e = make_element<ArrayElement>();
+    auto& content = e->get();
+    content.push_back(make_primitive(3.0));
+    content.push_back(make_primitive(false));
+    content.push_back(make_primitive("Ehlo"));
+
     v.visit(*e);
 
     REQUIRE(f.GCounter == 1); // just array
     REQUIRE(f.SCounter == 0);
-
-    delete e;
 }
 
 TEST_CASE("It should recognize Element Type by `Is` type operand", "[Visitor]")
@@ -124,43 +123,121 @@ TEST_CASE("It should recognize Element Type by `Is` type operand", "[Visitor]")
 
 struct Fixture {
 
-    static IElement* Complex()
+    static std::unique_ptr<IElement> Complex()
     {
-        return Build(new ObjectElement)("m1", IElement::Create("Str1"))(
-            "m2", Build(new ArrayElement)(IElement::Create("m2[0]"))(IElement::Create(2.1)))("m3",
-            Build(new ObjectElement)("m3.1", IElement::Create("Str3.1"))("m3.2", IElement::Create(3.2))(
-                "m3.3", Build(new ArrayElement)(IElement::Create("m[3][3][0]"))(IElement::Create(false)))("m3.4",
-                Build(new ObjectElement)("m3.4.1", IElement::Create("Str3/4/1"))("m3.4.2", IElement::Create(3.42))(
-                    "m3.4.2", new NullElement)));
+        auto result = make_element<ObjectElement>();
+        auto& content = result->get();
+
+        {
+            content.add_member("m1", make_primitive("Str1"));
+        }
+
+        {
+            auto arr = make_element<ArrayElement>();
+            {
+                auto& c = arr->get();
+                c.push_back(make_primitive("m2[0]"));
+                c.push_back(make_primitive(2.1));
+            }
+            content.add_member("m2", std::move(arr));
+        }
+
+        {
+            auto obj = make_element<ObjectElement>();
+            {
+                auto& c = obj->get();
+                c.add_member("m3.1", make_primitive("Str3.1"));
+                c.add_member("m3.2", make_primitive(3.2));
+
+                auto arr = make_element<ArrayElement>();
+                {
+                    auto& arrc = arr->get();
+                    arrc.push_back(make_primitive("m[3][3][0]"));
+                    arrc.push_back(make_primitive(false));
+                }
+                c.add_member("m3.3", std::move(arr));
+
+                auto subObj = make_element<ObjectElement>();
+                {
+                    auto& subObjc = subObj->get();
+                    subObjc.add_member("m3.4.1", make_primitive("Str3/4/1"));
+                    subObjc.add_member("m3.4.2", make_primitive(3.42));
+                    subObjc.add_member("m3.4.2", make_empty<NullElement>());
+                }
+                c.add_member("m3.4", std::move(subObj));
+            }
+            content.add_member("m3", std::move(obj));
+        }
+
+        return std::move(result);
     }
 
-    static IElement* SimpleObject()
+    static std::unique_ptr<IElement> SimpleObject()
     {
-        return Build(new ObjectElement)("m1", IElement::Create("Str1"))("m2", IElement::Create("Str2"))(
-            "m3", IElement::Create(3));
+        auto result = make_element<ObjectElement>();
+        auto& content = result->get();
+
+        content.add_member("m1", make_primitive("Str1"));
+        content.add_member("m2", make_primitive("Str2"));
+        content.add_member("m3", make_primitive(3.0));
+
+        return std::move(result);
     }
 
-    static IElement* ObjectWithChild()
+    static std::unique_ptr<IElement> ObjectWithChild()
     {
-        return Build(new ObjectElement)("m1", IElement::Create("Str1"))(
-            "m2", Build(new ObjectElement)("m2.1", IElement::Create("Str2/1"))("m2.2", new NullElement));
+        auto result = make_element<ObjectElement>();
+        auto& content = result->get();
+
+        content.add_member("m1", make_primitive("Str1"));
+
+        auto child = make_element<ObjectElement>();
+        {
+            auto& childc = child->get();
+            childc.add_member("m2.1", make_primitive("Str2/1"));
+            childc.add_member("m2.2", make_empty<NullElement>());
+        }
+        content.add_member("m2", std::move(child));
+
+        return std::move(result);
     }
 
-    static IElement* SimpleArray()
+    static std::unique_ptr<IElement> SimpleArray()
     {
-        return Build(new ArrayElement)(IElement::Create("1"))(IElement::Create(2))(IElement::Create("3"));
+        auto result = make_element<ArrayElement>();
+        auto& content = result->get();
+
+        content.push_back(make_primitive("1"));
+        content.push_back(make_primitive(2.0));
+        content.push_back(make_primitive("3"));
+
+        return std::move(result);
     }
 
-    static IElement* ArrayWithChild()
+    static std::unique_ptr<IElement> ArrayWithChild()
     {
-        return Build(new ArrayElement)(IElement::Create("1"))(
-            Build(new ArrayElement())(IElement::Create(1))(IElement::Create(2)))(IElement::Create("3"));
+        auto result = make_element<ArrayElement>();
+        auto& content = result->get();
+
+        content.push_back(make_primitive("1"));
+
+        auto child = make_element<ArrayElement>();
+        {
+            auto& childc = child->get();
+            childc.push_back(make_primitive(1.0));
+            childc.push_back(make_primitive(2.0));
+        }
+        content.push_back(std::move(child));
+
+        content.push_back(make_primitive("3"));
+
+        return std::move(result);
     }
 };
 
 TEST_CASE("Iterate<Recursive>", "[Visitor]")
 {
-    IElement* e = Fixture::SimpleArray();
+    auto e = Fixture::SimpleArray();
 
     Functor f;
     Iterate<> i(f);
@@ -168,13 +245,11 @@ TEST_CASE("Iterate<Recursive>", "[Visitor]")
 
     REQUIRE(f.GCounter == 2); // root array + number
     REQUIRE(f.SCounter == 2); // there are two strings
-
-    delete e;
 }
 
 TEST_CASE("Iterate<Children> on array", "[Visitor]")
 {
-    IElement* e = Fixture::ArrayWithChild();
+    auto e = Fixture::ArrayWithChild();
 
     Functor f;
     Iterate<Children> i(f);
@@ -182,13 +257,11 @@ TEST_CASE("Iterate<Children> on array", "[Visitor]")
 
     REQUIRE(f.GCounter == 1); // embeded array
     REQUIRE(f.SCounter == 2); // there are two strings
-
-    delete e;
 }
 
 TEST_CASE("Iterate<Children> on object", "[Visitor]")
 {
-    IElement* e = Fixture::ObjectWithChild();
+    auto e = Fixture::ObjectWithChild();
 
     Functor f;
     Iterate<Children> i(f);
@@ -196,13 +269,11 @@ TEST_CASE("Iterate<Children> on object", "[Visitor]")
 
     REQUIRE(f.GCounter == 2); // 2 members
     REQUIRE(f.SCounter == 0); // there are two strings
-
-    delete e;
 }
 
 TEST_CASE("Iterate<Children> on string", "[Visitor]")
 {
-    IElement* e = IElement::Create("string");
+    auto e = make_primitive("string");
 
     Functor f;
     Iterate<Children> i(f);
@@ -211,33 +282,42 @@ TEST_CASE("Iterate<Children> on string", "[Visitor]")
     // Functor is not invoked because string has no children
     REQUIRE(f.GCounter == 0);
     REQUIRE(f.SCounter == 0);
-
-    delete e;
 }
 
 TEST_CASE("Query Element name", "[Visitor]")
 {
-    ArrayElement* a = new ArrayElement;
+    auto a = make_element<ArrayElement>();
+    auto& ac = a->get();
 
-    a->push_back(IElement::Create("str"));
+    ac.push_back(make_primitive("str"));
 
-    ArrayElement* namedArray = new ArrayElement;
-    namedArray->element("named");
-    a->push_back(namedArray);
+    auto namedArrayPtr = [](auto& content) {
+        auto namedArray = make_empty<ArrayElement>();
+        namedArray->element("named");
 
-    NumberElement* namedNumber = new NumberElement;
-    namedNumber->element("named");
-    a->push_back(namedNumber);
+        auto result = namedArray.get();
+        content.push_back(std::move(namedArray));
 
-    a->push_back(IElement::Create("final"));
+        return result;
+    }(ac);
+
+    auto namedNumberPtr = [](auto& content) {
+        auto namedNumber = make_empty<NumberElement>();
+        namedNumber->element("named");
+
+        auto result = namedNumber.get();
+        content.push_back(std::move(namedNumber));
+
+        return result;
+    }(ac);
+
+    ac.push_back(make_primitive("final"));
 
     FilterVisitor filter(refract::query::Element("named"));
     Iterate<> i(filter);
     i(*a);
 
     REQUIRE(filter.elements().size() == 2);
-    REQUIRE(filter.elements()[0] == namedArray);
-    REQUIRE(filter.elements()[1] == namedNumber);
-
-    delete a;
+    REQUIRE(filter.elements()[0] == namedArrayPtr);
+    REQUIRE(filter.elements()[1] == namedNumberPtr);
 }

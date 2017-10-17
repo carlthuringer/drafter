@@ -13,6 +13,5 @@
 #include "ElementMock.h"
 
 using namespace refract;
-using namespace experimental;
 using namespace data;
 

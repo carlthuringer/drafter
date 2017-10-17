@@ -13,7 +13,7 @@
 
 namespace drafter
 {
-    template <typename ElementT>
+    template <typename ElementT, typename = std::enable_if<std::is_base_of<refract::IElement, ElementT>::value> >
     constexpr bool is_primitive = false;
 
     template <>
@@ -25,8 +25,8 @@ namespace drafter
     template <>
     constexpr bool is_primitive<refract::StringElement> = true;
 
-    template <>
-    constexpr bool is_primitive<refract::NullElement> = true;
+    //template <>
+    //constexpr bool is_primitive<refract::NullElement> = true;
 
     template <typename ElementT>
     struct content_source_map_type {

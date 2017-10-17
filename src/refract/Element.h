@@ -180,11 +180,8 @@ namespace refract
         return element;
     }
 
-    bool isReserved(const char* w);
-    bool isReserved(const std::string& w)
-    {
-        return isReserved(w.c_str());
-    }
+    bool isReserved(const char* w) noexcept;
+    bool isReserved(const std::string& w) noexcept;
 }
 
 #endif

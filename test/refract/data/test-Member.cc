@@ -10,11 +10,10 @@
 
 #include "refract/data/Member.h"
 
-#include "refract/data/Element.h"
+#include "refract/Element.h"
 #include "ElementMock.h"
 
 using namespace refract;
-using namespace experimental;
 using namespace data;
 
 SCENARIO("`member_t` is default constructed and both copy- and move constructed from", "[ElementData][member_t]")

@@ -227,20 +227,7 @@ namespace refract
         }
     }
 
-    MemberElement* FindMemberByKey(const ObjectElement& e, const std::string& name)
-    {
-        auto it = std::find_if(e.get().begin(), e.get().end(), [&name](const auto& el) {
-            ComparableVisitor cmp(name, ComparableVisitor::key);
-            VisitBy(*el, cmp);
-            return cmp.get();
-        });
-
-        if (it == e.get().end()) {
-            return nullptr;
-        }
-
-        return static_cast<MemberElement*>(it->get());
-    }
+    MemberElement* FindMemberByKey(const ObjectElement& e, const std::string& name);
 
     template <typename T>
     T* FindCollectionMemberValue(const InfoElements& collection, const std::string& key)

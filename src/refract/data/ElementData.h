@@ -62,6 +62,11 @@ namespace refract
         struct data_of<std::string> {
             using type = data::string_t;
         };
+
+        template <size_t N>
+        struct data_of<char[N]> {
+            using type = data::string_t;
+        };
     }
 }
 

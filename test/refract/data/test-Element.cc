@@ -8,11 +8,10 @@
 
 #include "catch.hpp"
 
-#include "refract/data/Element.h"
+#include "refract/Element.h"
 #include "ElementMock.h"
 
 using namespace refract;
-using namespace experimental;
 using namespace data;
 
 namespace
@@ -118,7 +117,7 @@ namespace
     const char* CollectionMock::name = "{collection-mock}";
 }
 
-SCENARIO("Elements can be cloned with refract::experimental::clone(const IElement&)", "[Element]")
+SCENARIO("Elements can be cloned with refract::clone(const IElement&)", "[Element]")
 {
     GIVEN("An ElementMock")
     {
@@ -129,7 +128,7 @@ SCENARIO("Elements can be cloned with refract::experimental::clone(const IElemen
 
         WHEN("it is cloned with cValue | cElement")
         {
-            auto c = refract::experimental::clone(*mock, IElement::cValue | IElement::cElement);
+            auto c = refract::clone(*mock, IElement::cValue | IElement::cElement);
 
             THEN("there was one call to its methods")
             {
@@ -197,7 +196,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned without parameter")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element));
 
             THEN("the clone is not nullptr")
             {
@@ -248,7 +247,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cAll")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cAll));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cAll));
 
             THEN("the clone is not nullptr")
             {
@@ -298,7 +297,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cMeta));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cMeta));
 
             THEN("the clone is not nullptr")
             {
@@ -336,7 +335,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cAttributes")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cAttributes));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cAttributes));
 
             THEN("the clone is not nullptr")
             {
@@ -369,7 +368,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cValue")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cValue));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cValue));
 
             THEN("the clone is not nullptr")
             {
@@ -401,7 +400,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cElement")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cElement));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cElement));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -426,7 +425,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element, IElement::cNoMetaId));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cNoMetaId));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -452,7 +451,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cAttributes")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cAttributes));
+                refract::clone(element, IElement::cMeta | IElement::cAttributes));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -497,7 +496,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cValue")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cValue));
+                refract::clone(element, IElement::cMeta | IElement::cValue));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -541,7 +540,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cElement));
+                refract::clone(element, IElement::cMeta | IElement::cElement));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -579,7 +578,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cNoMetaId));
+                refract::clone(element, IElement::cMeta | IElement::cNoMetaId));
 
             REQUIRE(element.meta().find("id") != element.meta().end());
             THEN("the clone is not nullptr")
@@ -620,7 +619,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cAttributes | cValue")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cAttributes | IElement::cValue));
+                refract::clone(element, IElement::cAttributes | IElement::cValue));
 
             THEN("the clone is not nullptr")
             {
@@ -660,7 +659,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cAttributes | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cAttributes | IElement::cElement));
+                refract::clone(element, IElement::cAttributes | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -695,7 +694,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cAttributes | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cAttributes | IElement::cNoMetaId));
+                refract::clone(element, IElement::cAttributes | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -729,7 +728,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cValue | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cValue | IElement::cElement));
+                refract::clone(element, IElement::cValue | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -762,7 +761,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cValue | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cValue | IElement::cNoMetaId));
+                refract::clone(element, IElement::cValue | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -795,7 +794,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cElement | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cElement | IElement::cNoMetaId));
+                refract::clone(element, IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -822,7 +821,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cAttributes | cValue")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cValue));
+                refract::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cValue));
 
             THEN("the clone is not nullptr")
             {
@@ -874,7 +873,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cAttributes | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cElement));
+                refract::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -920,7 +919,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cAttributes | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cNoMetaId));
+                refract::clone(element, IElement::cMeta | IElement::cAttributes | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -967,7 +966,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cValue | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cValue | IElement::cElement));
+                refract::clone(element, IElement::cMeta | IElement::cValue | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -1012,7 +1011,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cValue | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cValue | IElement::cNoMetaId));
+                refract::clone(element, IElement::cMeta | IElement::cValue | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1058,7 +1057,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cMeta | cElement | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cMeta | IElement::cElement | IElement::cNoMetaId));
+                refract::clone(element, IElement::cMeta | IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1098,7 +1097,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cAttributes | cValue | cElement")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cAttributes | IElement::cValue | IElement::cElement));
+                refract::clone(element, IElement::cAttributes | IElement::cValue | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -1138,7 +1137,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cAttributes | cValue | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cAttributes | IElement::cValue | IElement::cNoMetaId));
+                refract::clone(element, IElement::cAttributes | IElement::cValue | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1177,7 +1176,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cAttributes | cElement | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cAttributes | IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
@@ -1212,7 +1211,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         WHEN("it is cloned with cValue | cElement | cNoMetaId")
         {
             std::unique_ptr<Element<DataMock> > clone(
-                refract::experimental::clone(element, IElement::cValue | IElement::cElement | IElement::cNoMetaId));
+                refract::clone(element, IElement::cValue | IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1244,7 +1243,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cAttributes | cValue | cElement")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cMeta | IElement::cAttributes | IElement::cValue | IElement::cElement));
 
             THEN("the clone is not nullptr")
@@ -1296,7 +1295,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cAttributes | cValue | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cMeta | IElement::cAttributes | IElement::cValue | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
@@ -1349,7 +1348,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cAttributes | cValue | cElement | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cAttributes | IElement::cValue | IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
@@ -1390,7 +1389,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         //
         WHEN("it is cloned with cValue | cElement | cNoMetaId | cMeta")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cValue | IElement::cElement | IElement::cNoMetaId | IElement::cMeta));
 
             THEN("the clone is not nullptr")
@@ -1436,7 +1435,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cElement | cNoMetaId | cMeta | cAttributes")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(
                 element, IElement::cElement | IElement::cNoMetaId | IElement::cMeta | IElement::cAttributes));
 
             THEN("the clone is not nullptr")
@@ -1483,7 +1482,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cElement | cNoMetaId | cMeta | cAttributes | cValue")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::experimental::clone(element,
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element,
                 IElement::cElement | IElement::cNoMetaId | IElement::cMeta | IElement::cAttributes | IElement::cValue));
 
             THEN("the clone is not nullptr")

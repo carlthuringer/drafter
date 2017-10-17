@@ -8,13 +8,12 @@
 
 #include "catch.hpp"
 
-#include "refract/data/InfoElements.h"
-#include "refract/data/ElementIfc.h"
+#include "refract/InfoElements.h"
+#include "refract/ElementIfc.h"
 
 #include "ElementMock.h"
 
 using namespace refract;
-using namespace experimental;
 
 SCENARIO("InfoElementss are initialy empty", "[InfoElements]")
 {

@@ -8,46 +8,59 @@
 #include "Element.h"
 #include "VisitorUtils.h"
 
-namespace refract
+using namespace refract;
+
+const StringElement* refract::GetDescription(const IElement& e)
+{
+    auto i = e.meta().find("description");
+
+    if (i == e.meta().end()) {
+        return nullptr;
+    }
+
+    return TypeQueryVisitor::as<const StringElement>(i->second.get());
+}
+
+std::string refract::GetKeyAsString(const MemberElement& e)
 {
 
-    const StringElement* GetDescription(const IElement& e)
-    {
-        auto i = e.meta().find("description");
+    auto element = e.get().key();
 
-        if (i == e.meta().end()) {
-            return nullptr;
-        }
-
-        return TypeQueryVisitor::as<const StringElement>(i->second.get());
+    if (auto str = TypeQueryVisitor::as<const StringElement>(element)) {
+        return str->get();
     }
 
-    std::string GetKeyAsString(const MemberElement& e)
-    {
+    if (auto ext = TypeQueryVisitor::as<const ExtendElement>(element)) {
+        auto merged = ext->get().merge();
 
-        auto element = e.get().key();
+        if (auto str = TypeQueryVisitor::as<const StringElement>(merged.get())) {
 
-        if (auto str = TypeQueryVisitor::as<const StringElement>(element)) {
-            return str->get();
-        }
-
-        if (auto ext = TypeQueryVisitor::as<const ExtendElement>(element)) {
-            auto merged = ext->get().merge();
-
-            if (auto str = TypeQueryVisitor::as<const StringElement>(merged.get())) {
-
-                std::string key = str->get();
-                if (key.empty()) {
-                    auto k = GetValue<const StringElement>()(*str);
-                    if (k) {
-                        key = k->get();
-                    }
+            std::string key = str->get();
+            if (key.empty()) {
+                auto k = GetValue<const StringElement>()(*str);
+                if (k) {
+                    key = k->get();
                 }
-
-                return key;
             }
-        }
 
-        return std::string();
+            return key;
+        }
     }
+
+    return std::string();
+}
+
+MemberElement* refract::FindMemberByKey(const ObjectElement& e, const std::string& name)
+{
+    auto it = std::find_if(e.get().begin(), e.get().end(), [&name](const auto& el) {
+        ComparableVisitor cmp(name, ComparableVisitor::key);
+        VisitBy(*el, cmp);
+        return cmp.get();
+    });
+
+    if (it == e.get().end()) {
+        return nullptr;
+    }
+
+    return static_cast<MemberElement*>(it->get());
 }
