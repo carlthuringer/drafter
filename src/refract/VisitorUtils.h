@@ -56,7 +56,7 @@ namespace refract
             return false;
         }
 
-        auto b = TypeQueryVisitor::as<const BooleanElement>(var->second);
+        auto b = TypeQueryVisitor::as<const BooleanElement>(var->second.get());
         return b ? static_cast<bool>(b->get()) : false;
     }
 

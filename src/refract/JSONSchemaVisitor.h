@@ -67,7 +67,7 @@ namespace refract
             for (const auto& member : members) {
                 if (!member)
                     continue;
-                processMember(*member, varProps, oneOfMembers, o);
+                processMember(*member, varProps, oneOfMembers, o, required);
             }
 
             std::transform(required.begin(), required.end(), std::back_inserter(reqVals), [](const std::string& value) {

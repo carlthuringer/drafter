@@ -61,8 +61,16 @@ namespace
                 continue;
             }
 
-            members.push_back(value);
+            members.push_back(clone(*value));
         }
+    }
+
+    bool AllItemsEmpty(const ArrayElement::ValueType& val)
+    {
+        return std::all_of(val.begin(), val.end(), [](const auto& el) {
+            assert(el);
+            return el->empty();
+        });
     }
 }
 
@@ -141,17 +149,10 @@ void JSONSchemaVisitor::addMember(const std::string& key, std::unique_ptr<IEleme
     pObj->get().add_member(key, std::move(val));
 }
 
-bool JSONSchemaVisitor::allItemsEmpty(const ArrayElement::ValueType* val)
-{
-    return std::find_if(val->begin(), val->end(), std::not1(std::mem_fun(&refract::IElement::empty))) == val->end();
-}
-
 template <typename T>
 void JSONSchemaVisitor::primitiveType(const T& e)
 {
-    auto value = GetValue<T>(e);
-
-    if (value) {
+    if (auto value = GetValue<T>{}(e)) {
         setPrimitiveType(e);
 
         if (fixed) {
@@ -408,7 +409,7 @@ void JSONSchemaVisitor::operator()(const ArrayElement& e)
 
     if (fixed || fixedType) {
         data::array_t av;
-        bool allEmpty = allItemsEmpty(&val);
+        bool allEmpty = AllItemsEmpty(val);
 
         for (auto const& value : val) {
 
@@ -456,7 +457,10 @@ void JSONSchemaVisitor::operator()(const EnumElement& e)
     const auto& it = e.attributes().find("enumerations");
     if (it != e.attributes().end()) {
         if (const ArrayElement* enums = TypeQueryVisitor::as<const ArrayElement>(it->second.get())) {
-            elms.insert(elms.end(), enums->get().begin(), enums->get().end());
+            std::transform(enums->get().begin(),
+                enums->get().end(),
+                std::back_inserter(elms),
+                [](const std::unique_ptr<IElement>& el) { return el.get(); });
         }
     }
 
@@ -490,7 +494,7 @@ void JSONSchemaVisitor::operator()(const EnumElement& e)
         const EnumElement* def = GetDefault(e);
         if (!elms.empty() || (def && !def->empty())) {
             auto a = make_element<ArrayElement>();
-            CloneMembers(a, &elms);
+            CloneMembers(a->get(), elms);
             setSchemaType(types.begin()->first);
             addMember("enum", std::move(a));
         }

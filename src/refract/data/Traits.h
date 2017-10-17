@@ -183,7 +183,7 @@ namespace refract
             template <typename = typename std::enable_if<data::supports_clear<Child>::value> >
             void clear()
             {
-                auto e = erase(self().begin(), self().end());
+                auto e = self().erase(self().begin(), self().end());
                 assert(e == self().end());
             }
 
