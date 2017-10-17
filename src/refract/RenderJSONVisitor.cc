@@ -35,7 +35,7 @@ namespace refract
                 }
 
                 if (auto ref = TypeQueryVisitor::as<const RefElement>(item.get())) {
-                    HandleRefWhenFetchingMembers<T>(ref, members, FetchMembers<T, Collection>);
+                    HandleRefWhenFetchingMembers<T>(*ref, members, FetchMembers<T, Collection>);
                     continue;
                 } else if (auto select = TypeQueryVisitor::as<const SelectElement>(item.get())) {
                     if (select->get().empty() || !(*select->get().begin())) {

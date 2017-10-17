@@ -95,9 +95,7 @@ namespace drafter
             }
 
             case JSONSchemaRenderFormat: {
-                refract::JSONSchemaVisitor renderer;
-                std::string result = renderer.getSchema(*expanded);
-                return std::make_pair(result, NodeInfo<Asset>::NullSourceMap());
+                return std::make_pair(renderJsonSchema(*expanded), NodeInfo<Asset>::NullSourceMap());
             }
 
             case UndefinedRenderFormat:
@@ -132,7 +130,6 @@ namespace drafter
             return schema;
         }
 
-        refract::JSONSchemaVisitor renderer;
         auto element = MSONToRefract(*attributes, context);
 
         if (!element) {
@@ -145,6 +142,6 @@ namespace drafter
             return schema;
         }
 
-        return std::make_pair(renderer.getSchema(*expanded), NodeInfo<Asset>::NullSourceMap());
+        return std::make_pair(renderJsonSchema(*expanded), NodeInfo<Asset>::NullSourceMap());
     }
 }

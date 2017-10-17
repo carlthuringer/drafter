@@ -199,11 +199,11 @@ namespace refract
     // will be moved into different header (as part of drafter instead of refract)
     template <typename T, typename Collection, typename Functor>
     void HandleRefWhenFetchingMembers(
-        const refract::IElement* e, Collection& members, const Functor& functor)
+        const refract::IElement& e, Collection& members, const Functor& functor)
     {
-        auto found = e->attributes().find("resolved");
+        auto found = e.attributes().find("resolved");
 
-        if (found == e->attributes().end()) {
+        if (found == e.attributes().end()) {
             return;
         }
 
@@ -227,8 +227,7 @@ namespace refract
         }
     }
 
-    template <typename T>
-    MemberElement* FindMemberByKey(const T& e, const std::string& name)
+    MemberElement* FindMemberByKey(const ObjectElement& e, const std::string& name)
     {
         auto it = std::find_if(e.get().begin(), e.get().end(), [&name](const auto& el) {
             ComparableVisitor cmp(name, ComparableVisitor::key);
@@ -240,7 +239,7 @@ namespace refract
             return nullptr;
         }
 
-        return *it;
+        return static_cast<MemberElement*>(it->get());
     }
 
     template <typename T>

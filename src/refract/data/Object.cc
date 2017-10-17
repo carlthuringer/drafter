@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include "Traits.h"
+#include "../Element.h"
 
 using namespace refract;
 using namespace data;
@@ -69,4 +70,9 @@ object_t::iterator object_t::insert(object_t::const_iterator it, std::unique_ptr
 object_t::iterator object_t::erase(object_t::const_iterator b, object_t::const_iterator e)
 {
     return elements_.erase(b, e);
+}
+
+object_t::iterator object_t::add_member(std::string name, std::unique_ptr<IElement> value)
+{
+    return insert(end(), make_element<MemberElement>(name, std::move(value)));
 }

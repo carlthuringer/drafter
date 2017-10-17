@@ -22,7 +22,7 @@ namespace refract
     class JSONSchemaVisitor final
     {
         std::unique_ptr<ObjectElement> pObj;
-        std::shared_ptr<ObjectElement> pDefs;
+        ObjectElement& pDefs;
 
         bool fixed;
         bool fixedType;
@@ -34,8 +34,8 @@ namespace refract
         void anyOf(std::map<std::string, std::vector<const IElement*> >& types, std::vector<std::string>& typesOrder);
         bool allItemsEmpty(const ArrayElement::ValueType* val);
         std::unique_ptr<ObjectElement> definitionFromVariableProperty(JSONSchemaVisitor& renderer);
-        void addVariableProps(std::vector<MemberElement*>& props, std::unique_ptr<ObjectElement> o);
-        std::unique_ptr<ArrayElement> arrayFromProps(std::vector<MemberElement*>& props);
+        void addVariableProps(std::vector<const MemberElement*>& props, std::unique_ptr<ObjectElement> o);
+        std::unique_ptr<ArrayElement> arrayFromProps(std::vector<const MemberElement*>& props);
 
         template <typename T>
         void setPrimitiveType(const T& e)
@@ -50,7 +50,7 @@ namespace refract
         void primitiveType(const T& e);
 
         void processMember(const IElement& member,
-            std::vector<MemberElement*>& varProps,
+            std::vector<const MemberElement*>& varProps,
             data::array_t& oneOfMembers,
             ObjectElement& o,
             std::set<std::string>& required);
@@ -58,7 +58,7 @@ namespace refract
         template <typename ContentT>
         void processMembers(const ContentT& members,
             ArrayElement::ValueType& reqVals,
-            std::vector<MemberElement*>& varProps,
+            std::vector<const MemberElement*>& varProps,
             data::array_t& oneOfMembers,
             ObjectElement& o)
         {
@@ -76,8 +76,7 @@ namespace refract
         }
 
     public:
-        JSONSchemaVisitor(
-            std::shared_ptr<ObjectElement> pDefinitions = nullptr, bool _fixed = false, bool _fixedType = false);
+        JSONSchemaVisitor(ObjectElement& pDefinitions, bool _fixed = false, bool _fixedType = false);
 
         void setFixed(bool _fixed);
         void setFixedType(bool _fixedType);
@@ -95,10 +94,12 @@ namespace refract
 
         void operator()(const OptionElement& e);
 
-        IElement* get();
-        std::unique_ptr<IElement> getOwnership();
+        ObjectElement* get();
+        std::unique_ptr<ObjectElement> getOwnership();
         std::string getSchema(const IElement& e);
     };
+
+    std::string renderJsonSchema(const IElement& e);
 }
 
 #endif

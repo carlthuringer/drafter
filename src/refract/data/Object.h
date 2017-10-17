@@ -127,7 +127,7 @@ namespace refract
                 return elements_.end();
             }
 
-        public:
+        public: // collection-specific
             ///
             /// Add a child Element
             ///
@@ -147,6 +147,17 @@ namespace refract
             /// @return iterator following the last child removed
             ///
             iterator erase(const_iterator b, const_iterator e);
+
+        public: // object-specific
+            ///
+            /// Add a property to this DSD
+            ///
+            /// @param name    name of the property to be added
+            /// @param value   value of the property to be added
+            ///
+            /// @return iterator to member element representing this property
+            ///
+            iterator add_member(std::string name, std::unique_ptr<IElement> value);
         };
     }
 }
