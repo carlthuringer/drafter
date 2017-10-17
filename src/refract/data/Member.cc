@@ -9,12 +9,11 @@
 #include "Member.h"
 
 #include "Traits.h"
-#include "ElementFwd2.h"
-#include "Element.h"
+#include "../ElementFwd.h"
+#include "../Element.h"
 #include "String.h"
 
 using namespace refract;
-using namespace experimental;
 using namespace data;
 
 const char* member_t::name = "member";
@@ -37,7 +36,7 @@ member_t::member_t(const member_t& other)
     : key_(other.key_ ? clone(*other.key_) : nullptr), value_(other.value_ ? clone(*other.value_) : nullptr)
 {
 }
-member_t::member_t(std::unique_ptr<experimental::IElement> key, std::unique_ptr<experimental::IElement> value)
+member_t::member_t(std::unique_ptr<IElement> key, std::unique_ptr<IElement> value)
     : key_(std::move(key)), value_(std::move(value))
 {
 }
@@ -47,7 +46,7 @@ member_t::member_t(const char* key, std::unique_ptr<IElement> value)
 {
 }
 
-member_t::member_t(const std::string& key, std::unique_ptr<experimental::IElement> value)
+member_t::member_t(const std::string& key, std::unique_ptr<IElement> value)
     : member_t(key.c_str(), std::move(value))
 {
 }

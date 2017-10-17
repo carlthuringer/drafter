@@ -181,6 +181,10 @@ namespace refract
     }
 
     bool isReserved(const char* w);
+    bool isReserved(const std::string& w)
+    {
+        return isReserved(w.c_str());
+    }
 }
 
 #endif
