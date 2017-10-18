@@ -25,7 +25,7 @@ namespace
         "boolean", //
         "enum",    //
         "extend",  //
-        "generic"  //
+        "generic", //
         "member",  //
         "null",    //
         "number",  //
@@ -39,6 +39,7 @@ namespace
 
 bool refract::isReserved(const char* w) noexcept
 {
+    assert(w);
     return std::binary_search(reserved_.begin(), reserved_.end(), w, [](const char* first, const char* second) {
         return (0 > std::strcmp(first, second));
     });

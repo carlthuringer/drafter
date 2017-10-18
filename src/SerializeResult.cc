@@ -44,7 +44,8 @@ std::unique_ptr<IElement> drafter::WrapRefract(
     snowcrash::Error error;
     std::unique_ptr<IElement> blueprintRefract = nullptr;
 
-    auto parseResult = make_empty<ArrayElement>();
+    // auto parseResult = make_empty<ArrayElement>();
+    auto parseResult = make_element<ArrayElement>(); // XXX @tjanc@ review
     parseResult->element(SerializeKey::ParseResult);
 
     if (blueprint.report.error.code == snowcrash::Error::OK) {

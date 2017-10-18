@@ -66,7 +66,7 @@ namespace refract
     public:
         DataType& get() noexcept
         {
-            hasValue_ = true;
+            assert(hasValue_);
             return data_;
         }
 

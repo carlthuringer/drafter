@@ -55,14 +55,15 @@ namespace refract
                     return true;
                 }
 
-                for (const auto& option : e->get()) {
-                    IsExpandableVisitor v;
-                    VisitBy(*option, v);
+                if (!e->empty())
+                    for (const auto& option : e->get()) {
+                        IsExpandableVisitor v;
+                        VisitBy(*option, v);
 
-                    if (v.get()) {
-                        return true;
+                        if (v.get()) {
+                            return true;
+                        }
                     }
-                }
 
                 return false;
             }
@@ -76,6 +77,9 @@ namespace refract
                 if (checkElement(e)) {
                     return true;
                 }
+
+                if (e->empty())
+                    return false;
 
                 const auto& content = e->get();
 
@@ -108,14 +112,15 @@ namespace refract
                     return true;
                 }
 
-                for (const auto& entry : e->get()) {
-                    IsExpandableVisitor v;
-                    VisitBy(*entry, v);
+                if (!e->empty())
+                    for (const auto& entry : e->get()) {
+                        IsExpandableVisitor v;
+                        VisitBy(*entry, v);
 
-                    if (v.get()) {
-                        return true;
+                        if (v.get()) {
+                            return true;
+                        }
                     }
-                }
 
                 return false;
             }

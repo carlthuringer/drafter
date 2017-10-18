@@ -117,6 +117,88 @@ namespace
     const char* CollectionMock::name = "{collection-mock}";
 }
 
+SCENARIO("`isReserved` identifies reserved type names", "[Element]")
+{
+    WHEN("it is invoked with an `array` literal") {
+        bool result = isReserved("array");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `boolean` literal") {
+        bool result = isReserved("boolean");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `enum` literal") {
+        bool result = isReserved("enum");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `extend` literal") {
+        bool result = isReserved("extend");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `generic` literal") {
+        bool result = isReserved("generic");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `member` literal") {
+        bool result = isReserved("member");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `null` literal") {
+        bool result = isReserved("null");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `number` literal") {
+        bool result = isReserved("number");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `object` literal") {
+        bool result = isReserved("object");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `option` literal") {
+        bool result = isReserved("option");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `ref` literal") {
+        bool result = isReserved("ref");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `select` literal") {
+        bool result = isReserved("select");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+    WHEN("it is invoked with an `string` literal") {
+        bool result = isReserved("string");
+        THEN("the result is `true`") {
+            REQUIRE(result);
+        }
+    }
+}
+
 SCENARIO("Elements can be cloned with refract::clone(const IElement&)", "[Element]")
 {
     GIVEN("An ElementMock")

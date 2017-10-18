@@ -16,7 +16,7 @@ using namespace refract;
 
 std::unique_ptr<ArrayElement> drafter::CreateArrayElement(std::unique_ptr<IElement> value)
 {
-    auto array = make_empty<ArrayElement>();
+    auto array = make_element<ArrayElement>();
     array->get().push_back(std::move(value));
     return std::move(array);
 }
