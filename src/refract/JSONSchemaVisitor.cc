@@ -606,6 +606,7 @@ void JSONSchemaVisitor::processMember(const IElement& member,
                 if (!o1->get().empty()) {
                     auto front = o1->get().begin()[0]->clone();
                     if (TypeQueryVisitor::as<MemberElement>(front.get())) {
+                        o.set();
                         o.get().push_back(std::move(front));
                     }
                 }

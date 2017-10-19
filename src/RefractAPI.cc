@@ -277,8 +277,11 @@ std::unique_ptr<IElement> PayloadToRefract(
                 MAKE_NODE_INFO(payload, headers), context, HeaderToRefract, SerializeKey::HTTPHeaders));
     }
 
-    content.push_back(CopyToRefract(MAKE_NODE_INFO(payload, description)));
-    content.push_back(DataStructureToRefract(MAKE_NODE_INFO(payload, attributes), context));
+    if (!payload.node->description.empty())
+        content.push_back(CopyToRefract(MAKE_NODE_INFO(payload, description)));
+
+    if (!payload.node->attributes.empty())
+        content.push_back(DataStructureToRefract(MAKE_NODE_INFO(payload, attributes), context));
 
     // FIXME: This whole rendering should be done after converting to refract. Currently, both
     // the renders will do MSONToRefract individually on the same thing. So, basically, the attributes
@@ -294,13 +297,18 @@ std::unique_ptr<IElement> PayloadToRefract(
             = snowcrash::RegexMatch(contentType, JSONRegex) ? JSONSchemaContentType : contentType;
 
         // Push Body Asset
-        content.push_back(
-            AssetToRefract(NodeInfo<snowcrash::Asset>(payloadBody), contentType, SerializeKey::MessageBody));
+        if (!payloadBody.first.empty())
+            content.push_back(AssetToRefract( //
+                NodeInfo<snowcrash::Asset>(payloadBody),
+                contentType,
+                SerializeKey::MessageBody));
 
         // Render only if Body is JSON or Schema is defined
         if (!payloadSchema.first.empty()) {
-            content.push_back(AssetToRefract(
-                NodeInfo<snowcrash::Asset>(payloadSchema), schemaContentType, SerializeKey::MessageBodySchema));
+            content.push_back(AssetToRefract( //
+                NodeInfo<snowcrash::Asset>(payloadSchema),
+                schemaContentType,
+                SerializeKey::MessageBodySchema));
         }
     }
 
@@ -336,7 +344,8 @@ std::unique_ptr<ArrayElement> TransactionToRefract(const NodeInfo<snowcrash::Tra
 
     element->element(SerializeKey::HTTPTransaction);
 
-    content.push_back(CopyToRefract(MAKE_NODE_INFO(transaction, description)));
+    if (!transaction.node->description.empty())
+        content.push_back(CopyToRefract(MAKE_NODE_INFO(transaction, description)));
     content.push_back(PayloadToRefract(request, action, context));
     content.push_back(PayloadToRefract(response, NodeInfo<snowcrash::Action>(), context));
 
@@ -375,7 +384,8 @@ std::unique_ptr<ArrayElement> ActionToRefract(const NodeInfo<snowcrash::Action>&
 
     auto& content = element->get();
 
-    content.push_back(CopyToRefract(MAKE_NODE_INFO(action, description)));
+    if (!action.node->description.empty())
+        content.push_back(CopyToRefract(MAKE_NODE_INFO(action, description)));
 
     typedef NodeInfoCollection<snowcrash::TransactionExamples> ExamplesType;
     ExamplesType examples(MAKE_NODE_INFO(action, examples));
@@ -436,8 +446,11 @@ std::unique_ptr<ArrayElement> ResourceToRefract(
 
     auto& content = element->get();
 
-    content.push_back(CopyToRefract(MAKE_NODE_INFO(resource, description)));
-    content.push_back(DataStructureToRefract(MAKE_NODE_INFO(resource, attributes), context));
+    if (!resource.node->description.empty())
+        content.push_back(CopyToRefract(MAKE_NODE_INFO(resource, description)));
+
+    if (!resource.node->attributes.empty())
+        content.push_back(DataStructureToRefract(MAKE_NODE_INFO(resource, attributes), context));
     NodeInfoToElements(MAKE_NODE_INFO(resource, actions), ActionToRefract, content, context);
 
     RemoveEmptyElements(content);
@@ -510,7 +523,9 @@ std::unique_ptr<IElement> drafter::BlueprintToRefract(
     ast->meta().set(SerializeKey::Title, PrimitiveToRefract(MAKE_NODE_INFO(blueprint, name)));
 
     auto& content = ast->get();
-    content.push_back(CopyToRefract(MAKE_NODE_INFO(blueprint, description)));
+
+    if (!blueprint.node->description.empty())
+        content.push_back(CopyToRefract(MAKE_NODE_INFO(blueprint, description)));
 
     if (!blueprint.node->metadata.empty()) {
         ast->attributes().set(SerializeKey::Metadata,

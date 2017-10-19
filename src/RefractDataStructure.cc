@@ -773,8 +773,8 @@ namespace
             auto info = Merge<T>()(std::move(values));
 
             auto result = LiteralTo<typename T::ValueType>(info.value);
-            assert(result.first); // by now we should have validated
 
+            // if(result.first) // FIXME: @tjanc@ uncomment to be specification compliant
             element.set(result.second);
 
             // FIXME: refactoring adept - AttachSourceMap require NodeInfo, let it pass for now
