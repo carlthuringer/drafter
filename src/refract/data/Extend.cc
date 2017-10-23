@@ -78,44 +78,46 @@ namespace
                 MapKeyToMember keysBase;
                 MapNameToRef refBase;
 
-                for (auto& el : value.get()) {
-                    if (auto member = TypeQueryVisitor::as<MemberElement>(el.get())) {
+                if (!value.empty())
+                    for (auto& el : value.get()) {
+                        if (auto member = TypeQueryVisitor::as<MemberElement>(el.get())) {
 
-                        if (auto key = TypeQueryVisitor::as<const StringElement>(member->get().key())) {
-                            keysBase[key->get()] = member;
+                            if (auto key = TypeQueryVisitor::as<const StringElement>(member->get().key())) {
+                                keysBase[key->get()] = member;
+                            }
+                        } else if (auto ref = TypeQueryVisitor::as<RefElement>(el.get())) {
+                            refBase[ref->get().name] = ref;
                         }
-                    } else if (auto ref = TypeQueryVisitor::as<RefElement>(el.get())) {
-                        refBase[ref->get().name] = ref;
                     }
-                }
 
-                for (auto& el : merge.get()) {
-                    if (auto member = TypeQueryVisitor::as<const MemberElement>(el.get())) {
-                        if (auto key = TypeQueryVisitor::as<const StringElement>(member->get().key())) {
+                if (!merge.empty())
+                    for (auto& el : merge.get()) {
+                        if (auto member = TypeQueryVisitor::as<const MemberElement>(el.get())) {
+                            if (auto key = TypeQueryVisitor::as<const StringElement>(member->get().key())) {
 
-                            auto iKey = keysBase.find(key->get());
-                            if (iKey != keysBase.end()) { // key is already presented, replace value
-                                iKey->second->get().value(member->get().value()->clone());
+                                auto iKey = keysBase.find(key->get());
+                                if (iKey != keysBase.end()) { // key is already presented, replace value
+                                    iKey->second->get().value(member->get().value()->clone());
 
-                                std::set<std::string> emptySet;
-                                InfoMerge<T>(iKey->second->meta(), emptySet)(member->meta());
-                                InfoMerge<T>(iKey->second->attributes(), emptySet)(member->attributes());
-                            } else { // unknown key, append value
-                                auto c = clone(*member);
-                                keysBase[key->get()] = c.get();
+                                    std::set<std::string> emptySet;
+                                    InfoMerge<T>(iKey->second->meta(), emptySet)(member->meta());
+                                    InfoMerge<T>(iKey->second->attributes(), emptySet)(member->attributes());
+                                } else { // unknown key, append value
+                                    auto c = clone(*member);
+                                    keysBase[key->get()] = c.get();
+                                    value.get().push_back(std::move(c));
+                                }
+                            }
+                        } else if (auto ref = TypeQueryVisitor::as<const RefElement>(el.get())) {
+                            if (refBase.find(ref->get().name) == refBase.end()) {
+                                auto c = clone(*ref);
+                                refBase[ref->get().symbol()] = c.get();
                                 value.get().push_back(std::move(c));
                             }
+                        } else if (!el->empty()) { // merge member is not MemberElement, append value
+                            value.get().push_back(clone(*el));
                         }
-                    } else if (auto ref = TypeQueryVisitor::as<const RefElement>(el.get())) {
-                        if (refBase.find(ref->get().name) == refBase.end()) {
-                            auto c = clone(*ref);
-                            refBase[ref->get().symbol()] = c.get();
-                            value.get().push_back(std::move(c));
-                        }
-                    } else if (!el->empty()) { // merge member is not MemberElement, append value
-                        value.get().push_back(clone(*el));
                     }
-                }
             }
         };
 
@@ -269,7 +271,7 @@ extend_t::iterator extend_t::insert(extend_t::const_iterator it, std::unique_ptr
     assert(el);
 
     if (end() - begin() > 0) {
-        if (typeid(*el) != typeid(elements_.front())) {
+        if (typeid(*el) != typeid(*elements_.front())) {
             throw LogicError("ExtendElement must be composed from Elements of same type");
         }
     }

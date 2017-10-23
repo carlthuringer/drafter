@@ -167,7 +167,9 @@ namespace refract
                 }
             }
 
-            return element.get().value();
+            return element.empty() ? //
+                nullptr :
+                element.get().value();
         }
 
         const ArrayElement* GetEnumerations(const EnumElement& e) const
@@ -198,8 +200,7 @@ namespace refract
 
     // will be moved into different header (as part of drafter instead of refract)
     template <typename T, typename Collection, typename Functor>
-    void HandleRefWhenFetchingMembers(
-        const refract::IElement& e, Collection& members, const Functor& functor)
+    void HandleRefWhenFetchingMembers(const refract::IElement& e, Collection& members, const Functor& functor)
     {
         auto found = e.attributes().find("resolved");
 

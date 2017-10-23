@@ -28,34 +28,35 @@ namespace refract
                 return;
             }
 
-            for (auto const& item : val->get()) {
+            if (!val->empty())
+                for (auto const& item : val->get()) {
 
-                if (!item || item->empty()) {
-                    continue;
-                }
-
-                if (auto ref = TypeQueryVisitor::as<const RefElement>(item.get())) {
-                    HandleRefWhenFetchingMembers<T>(*ref, members, FetchMembers<T, Collection>);
-                    continue;
-                } else if (auto select = TypeQueryVisitor::as<const SelectElement>(item.get())) {
-                    if (select->get().empty() || !(*select->get().begin())) {
+                    if (!item || item->empty()) {
                         continue;
                     }
 
-                    FetchMembers(*(*select->get().begin()), members);
-                    continue;
+                    if (auto ref = TypeQueryVisitor::as<const RefElement>(item.get())) {
+                        HandleRefWhenFetchingMembers<T>(*ref, members, FetchMembers<T, Collection>);
+                        continue;
+                    } else if (auto select = TypeQueryVisitor::as<const SelectElement>(item.get())) {
+                        if (select->get().empty() || !(*select->get().begin())) {
+                            continue;
+                        }
+
+                        FetchMembers(*(*select->get().begin()), members);
+                        continue;
+                    }
+
+                    RenderJSONVisitor renderer;
+                    Visit(renderer, *item);
+                    auto e = renderer.getOwnership();
+
+                    if (!e) {
+                        continue;
+                    }
+
+                    members.push_back(std::move(e));
                 }
-
-                RenderJSONVisitor renderer;
-                Visit(renderer, *item);
-                auto e = renderer.getOwnership();
-
-                if (!e) {
-                    continue;
-                }
-
-                members.push_back(std::move(e));
-            }
         }
     }
 

@@ -172,15 +172,12 @@ namespace refract
         template <typename T>
         std::unique_ptr<T> ExpandMembers(const T& e)
         {
-            // auto o = make_empty<T>();
-            auto o = make_element<T>(); // XXX @tjanc@ review
+            auto o = e.empty() ? //
+                make_empty<T>() :
+                make_element<T>(ExpandValue(e.get()));
 
             o->attributes() = e.attributes();
             o->meta() = e.meta();
-
-            if (!e.empty()) {
-                o->set(ExpandValue(e.get()));
-            }
 
             return std::move(o);
         }

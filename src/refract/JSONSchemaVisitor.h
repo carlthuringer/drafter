@@ -96,7 +96,7 @@ namespace refract
 
         ObjectElement* get();
         std::unique_ptr<ObjectElement> getOwnership();
-        std::string getSchema(const IElement& e);
+        //std::string getSchema(const IElement& e);
     };
 
     std::string renderJsonSchema(const IElement& e);

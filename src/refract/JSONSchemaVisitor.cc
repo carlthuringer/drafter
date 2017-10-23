@@ -280,6 +280,7 @@ std::unique_ptr<ArrayElement> JSONSchemaVisitor::arrayFromProps(std::vector<cons
     }
 }
 
+// TODO XXX @tjanc@ issue with next failing test somewhere here
 void JSONSchemaVisitor::addVariableProps(std::vector<const MemberElement*>& props, std::unique_ptr<ObjectElement> o)
 {
     if (o->empty() && props.size() == 1) {
