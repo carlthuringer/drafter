@@ -13,7 +13,7 @@
 using namespace refract;
 using namespace data;
 
-const char* bool_t::name = "bool";
+const char* bool_t::name = "boolean";
 
 static_assert(!supports_erase<bool_t>::value);
 static_assert(!supports_empty<bool_t>::value);
