@@ -24,9 +24,7 @@ namespace
         DataType foo = 42;
 
         DataMock() = default;
-        DataMock(DataType val) : foo(std::move(val))
-        {
-        }
+        DataMock(DataType val) : foo(std::move(val)) {}
 
         DataMock(const DataMock&) = default;
         DataMock(DataMock&&) = default;
@@ -46,13 +44,9 @@ namespace
         DataType foo = { 349, 8935, 33 };
 
         CollectionMock() = default;
-        CollectionMock(DataType val) : foo(std::move(val))
-        {
-        }
+        CollectionMock(DataType val) : foo(std::move(val)) {}
 
-        CollectionMock(std::initializer_list<int> val) : foo(std::move(val))
-        {
-        }
+        CollectionMock(std::initializer_list<int> val) : foo(std::move(val)) {}
 
         CollectionMock(const CollectionMock&) = default;
         CollectionMock(CollectionMock&&) = default;
@@ -119,81 +113,107 @@ namespace
 
 SCENARIO("`isReserved` identifies reserved type names", "[Element]")
 {
-    WHEN("it is invoked with an `array` literal") {
+    WHEN("it is invoked with an `array` literal")
+    {
         bool result = isReserved("array");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `boolean` literal") {
+    WHEN("it is invoked with an `boolean` literal")
+    {
         bool result = isReserved("boolean");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `enum` literal") {
+    WHEN("it is invoked with an `enum` literal")
+    {
         bool result = isReserved("enum");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `extend` literal") {
+    WHEN("it is invoked with an `extend` literal")
+    {
         bool result = isReserved("extend");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `generic` literal") {
+    WHEN("it is invoked with an `generic` literal")
+    {
         bool result = isReserved("generic");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `member` literal") {
+    WHEN("it is invoked with an `member` literal")
+    {
         bool result = isReserved("member");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `null` literal") {
+    WHEN("it is invoked with an `null` literal")
+    {
         bool result = isReserved("null");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `number` literal") {
+    WHEN("it is invoked with an `number` literal")
+    {
         bool result = isReserved("number");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `object` literal") {
+    WHEN("it is invoked with an `object` literal")
+    {
         bool result = isReserved("object");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `option` literal") {
+    WHEN("it is invoked with an `option` literal")
+    {
         bool result = isReserved("option");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `ref` literal") {
+    WHEN("it is invoked with an `ref` literal")
+    {
         bool result = isReserved("ref");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `select` literal") {
+    WHEN("it is invoked with an `select` literal")
+    {
         bool result = isReserved("select");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
-    WHEN("it is invoked with an `string` literal") {
+    WHEN("it is invoked with an `string` literal")
+    {
         bool result = isReserved("string");
-        THEN("the result is `true`") {
+        THEN("the result is `true`")
+        {
             REQUIRE(result);
         }
     }
@@ -532,8 +552,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cAttributes")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cMeta | IElement::cAttributes));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cMeta | IElement::cAttributes));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -577,8 +596,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cValue")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cMeta | IElement::cValue));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cMeta | IElement::cValue));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -621,8 +639,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cElement")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cMeta | IElement::cElement));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cMeta | IElement::cElement));
             THEN("the clone is not nullptr")
             {
                 REQUIRE(clone);
@@ -659,8 +676,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cMeta | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cMeta | IElement::cNoMetaId));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cMeta | IElement::cNoMetaId));
 
             REQUIRE(element.meta().find("id") != element.meta().end());
             THEN("the clone is not nullptr")
@@ -809,8 +825,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cValue | cElement")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cValue | IElement::cElement));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cValue | IElement::cElement));
 
             THEN("the clone is not nullptr")
             {
@@ -842,8 +857,7 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cValue | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(
-                refract::clone(element, IElement::cValue | IElement::cNoMetaId));
+            std::unique_ptr<Element<DataMock> > clone(refract::clone(element, IElement::cValue | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1258,8 +1272,8 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
 
         WHEN("it is cloned with cAttributes | cElement | cNoMetaId")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::clone(
-                element, IElement::cAttributes | IElement::cElement | IElement::cNoMetaId));
+            std::unique_ptr<Element<DataMock> > clone(
+                refract::clone(element, IElement::cAttributes | IElement::cElement | IElement::cNoMetaId));
 
             THEN("the clone is not nullptr")
             {
@@ -1471,8 +1485,8 @@ SCENARIO("Elements can be cloned with Element<T>::clone(int)", "[Element]")
         //
         WHEN("it is cloned with cValue | cElement | cNoMetaId | cMeta")
         {
-            std::unique_ptr<Element<DataMock> > clone(refract::clone(
-                element, IElement::cValue | IElement::cElement | IElement::cNoMetaId | IElement::cMeta));
+            std::unique_ptr<Element<DataMock> > clone(
+                refract::clone(element, IElement::cValue | IElement::cElement | IElement::cNoMetaId | IElement::cMeta));
 
             THEN("the clone is not nullptr")
             {
@@ -1651,7 +1665,7 @@ SCENARIO("Elements can be constructed", "[Element]")
             }
             THEN("its DataMock is default constructed")
             {
-                REQUIRE(element2.get().foo == 42);
+                REQUIRE(DataMock::last_instance().foo == 42);
             }
             THEN("its meta is empty")
             {

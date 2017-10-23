@@ -92,11 +92,12 @@ namespace refract
     {
         sos::Object obj;
 
-        for (auto const& value : e.get()) {
-            SosSerializeCompactVisitor sv(generateSourceMap);
-            VisitBy(*value, sv);
-            obj.set(sv.key(), sv.value());
-        }
+        if (!e.empty())
+            for (auto const& value : e.get()) {
+                SosSerializeCompactVisitor sv(generateSourceMap);
+                VisitBy(*value, sv);
+                obj.set(sv.key(), sv.value());
+            }
 
         value_ = obj;
     }

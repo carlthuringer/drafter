@@ -45,7 +45,9 @@ namespace
         std::transform(nodeInfoCollection.begin(),
             nodeInfoCollection.end(),
             std::back_inserter(content),
-            [&transformFunctor, &context](const auto& nodeInfo) { return transformFunctor(nodeInfo, context); });
+            [&transformFunctor, &context](const auto& nodeInfo) { //
+                return transformFunctor(nodeInfo, context);
+            });
     }
 
     // TODO make generator out of this?

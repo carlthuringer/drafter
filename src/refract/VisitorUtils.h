@@ -138,7 +138,7 @@ namespace refract
                 return operator()(*d);
             }
 
-            {
+            if (!element.empty()) {
                 const auto& value = element.get();
                 if (value.value()) {
                     return value.value();

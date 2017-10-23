@@ -54,7 +54,9 @@ namespace refract
             void operator()(IApply* apply, Visitor& iterable, const T& e)
             {
                 apply->visit(e);
-                Impl<V>()(apply, iterable, e.get());
+
+                if (!e.empty())
+                    Impl<V>()(apply, iterable, e.get());
             }
         };
 

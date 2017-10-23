@@ -157,7 +157,9 @@ void JSONSchemaVisitor::primitiveType(const T& e)
 
         if (fixed) {
             auto a = make_element<ArrayElement>();
-            a->get().push_back(make_element<T>(value->get()));
+            a->get().push_back(value->empty() ? //
+                    make_element<T>() :
+                    make_element<T>(value->get()));
             addMember("enum", std::move(a));
         }
     }
@@ -464,9 +466,10 @@ void JSONSchemaVisitor::operator()(const EnumElement& e)
         }
     }
 
-    if (auto v = e.get().value()) {
-        elms.push_back(v);
-    }
+    if (!e.empty())
+        if (auto v = e.get().value()) {
+            elms.push_back(v);
+        }
 
     if (elms.empty()) {
         return;

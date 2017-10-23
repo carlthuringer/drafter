@@ -135,7 +135,11 @@ namespace refract
     std::unique_ptr<IElement> getResult(const T& e)
     {
         auto v = GetValue<T>{}(e);
-        return v ? make_element<T>(v->get()) : nullptr;
+        return v ?                      //
+            (v->empty() ?               //
+                    make_element<T>() : // default content if empty
+                    make_element<T>(v->get())) :
+            nullptr;
     }
 
     void RenderJSONVisitor::operator()(const StringElement& e)
