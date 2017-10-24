@@ -146,7 +146,9 @@ void JSONSchemaVisitor::addNullToEnum()
 
 void JSONSchemaVisitor::addMember(const std::string& key, std::unique_ptr<IElement> val)
 {
+    const auto s = pObj->get().size();
     pObj->get().add_member(key, std::move(val));
+    assert(pObj->get().size() == s + 1);
 }
 
 template <typename T>
@@ -221,7 +223,7 @@ void JSONSchemaVisitor::operator()(const MemberElement& e)
             }
         }
 
-        addMember(str->get(), renderer.getOwnership());
+        addMember(str->empty() ? std::string{} : std::string{str->get()}, renderer.getOwnership());
     } else {
         throw LogicError("A property's key in the object is not of type string");
     }
@@ -334,7 +336,7 @@ void JSONSchemaVisitor::operator()(const ObjectElement& e)
             addVariableProps(varProps, std::move(o));
         } else {
             setSchemaType("object");
-            addMember("properties", std::move(o));
+            addMember("properties", std::move(o)); // TODO XXX @tjanc@ HIT 2
         }
     }
 
@@ -556,7 +558,7 @@ void JSONSchemaVisitor::operator()(const OptionElement& e)
 
     pObj = make_element<ObjectElement>();
 
-    addMember("properties", std::move(props));
+    addMember("properties", std::move(props)); // TODO XXX @tjanc@ HIT 2
 
     if (!reqVals.empty()) {
         addMember("required", make_element<ArrayElement>(std::move(reqVals)));

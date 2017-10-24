@@ -35,19 +35,20 @@ std::string refract::GetKeyAsString(const MemberElement& e)
 
         if (auto str = TypeQueryVisitor::as<const StringElement>(merged.get())) {
 
-            std::string key = str->get();
-            if (key.empty()) {
+            std::string result{};
+
+            if (str->empty() || str->get().empty()) { // TODO XXX @tjanc@ review second sub condition
                 auto k = GetValue<const StringElement>()(*str);
-                if (k) {
-                    key = k->get();
-                }
+                if (k && !k->empty()) {
+                    return k->get();
+                } else return {};
             }
 
-            return key;
+            return str->get();
         }
     }
 
-    return std::string();
+    return {};
 }
 
 MemberElement* refract::FindMemberByKey(const ObjectElement& e, const std::string& name)

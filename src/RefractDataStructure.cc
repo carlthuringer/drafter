@@ -935,7 +935,8 @@ namespace
     std::unique_ptr<IElement> GetPropertyKey(const NodeInfo<mson::PropertyMember>& property, ConversionContext& context)
     {
 
-        auto key = make_element<StringElement>();
+        auto key = make_empty<StringElement>();
+        // auto key = make_element<StringElement>(); // TODO XXX @tjanc@ review/above
         snowcrash::SourceMap<mson::Literal> sourceMap;
         sourceMap.sourceMap.append(property.sourceMap->name.sourceMap);
 
