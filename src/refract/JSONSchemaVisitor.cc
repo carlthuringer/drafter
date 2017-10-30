@@ -174,32 +174,42 @@ void JSONSchemaVisitor::operator()(const IElement& e)
 
 void JSONSchemaVisitor::operator()(const MemberElement& e)
 {
+    assert(!e.empty());
+
     JSONSchemaVisitor renderer(pDefs);
 
-    const auto& content = e.get();
+    const IElement* key = e.get().key();
+    const IElement* value = e.get().value();
 
-    if (auto val = content.value()) {
+    if (value) {
         if (IsTypeAttribute(e, "fixed") || fixed) {
             renderer.setFixed(true);
         }
 
         renderer.setFixedType(IsTypeAttribute(e, "fixedType"));
-        Visit(renderer, *val);
+        Visit(renderer, *value);
     }
 
-    const StringElement* str = TypeQueryVisitor::as<const StringElement>(content.key());
-    const ExtendElement* ext = TypeQueryVisitor::as<const ExtendElement>(content.key());
+    auto keyStr = TypeQueryVisitor::as<const StringElement>(key);
+    auto keyExt = TypeQueryVisitor::as<const ExtendElement>(key);
 
-    std::unique_ptr<IElement> merged = ext ? ext->get().merge() : nullptr;
+    auto keyMerged = [](const ExtendElement* ext) -> std::unique_ptr<StringElement> {
+        if (ext) {
+            auto merged = ext->get().merge();
+            if (StringElement* ownPtr = TypeQueryVisitor::as<StringElement>(merged.release()))
+                return std::unique_ptr<StringElement>(ownPtr);
+        }
+        return nullptr;
+    }(keyExt);
 
-    if (merged)
-        str = TypeQueryVisitor::as<StringElement>(merged.get());
+    if (keyMerged)
+        keyStr = keyMerged.get();
 
-    if (str) {
-        const IElement* desc = GetDescription(e);
+    if (keyStr) {
+        const auto& desc = GetDescription(e);
 
         if (desc) {
-            renderer.addMember("description", desc->clone());
+            renderer.addMember("description", clone(*desc));
         }
 
         if (IsTypeAttribute(e, "nullable")) {
@@ -207,23 +217,20 @@ void JSONSchemaVisitor::operator()(const MemberElement& e)
             renderer.addNullToEnum();
         }
 
-        const auto val = content.value();
-
         // Check for primitive types
-        auto s = TypeQueryVisitor::as<const StringElement>(val);
-        auto n = TypeQueryVisitor::as<const NumberElement>(val);
-        auto b = TypeQueryVisitor::as<const BooleanElement>(val);
+        const auto& valueStr = TypeQueryVisitor::as<const StringElement>(value);
+        const auto& valueNum = TypeQueryVisitor::as<const NumberElement>(value);
+        const auto& valueBool = TypeQueryVisitor::as<const BooleanElement>(value);
 
-        if (val && (s || n || b)) {
-            auto defaultIt = val->attributes().find("default");
+        if (value && (valueStr || valueNum || valueBool)) {
+            auto defaultIt = value->attributes().find("default");
 
-            if (defaultIt != val->attributes().end()) {
-                assert(defaultIt->second);
+            if (defaultIt != value->attributes().end()) {
                 renderer.addMember("default", defaultIt->second->clone());
             }
         }
 
-        addMember(str->empty() ? std::string{} : std::string{str->get()}, renderer.getOwnership());
+        addMember(keyStr->empty() ? std::string{} : std::string{ keyStr->get() }, renderer.getOwnership());
     } else {
         throw LogicError("A property's key in the object is not of type string");
     }
@@ -282,7 +289,6 @@ std::unique_ptr<ArrayElement> JSONSchemaVisitor::arrayFromProps(std::vector<cons
     }
 }
 
-// TODO XXX @tjanc@ issue with next failing test somewhere here
 void JSONSchemaVisitor::addVariableProps(std::vector<const MemberElement*>& props, std::unique_ptr<ObjectElement> o)
 {
     if (o->empty() && props.size() == 1) {
@@ -612,7 +618,8 @@ void JSONSchemaVisitor::processMember(const IElement& member,
                 if (!o1->get().empty()) {
                     auto front = o1->get().begin()[0]->clone();
                     if (TypeQueryVisitor::as<MemberElement>(front.get())) {
-                        o.set();
+                        if (o.empty())
+                            o.set();
                         o.get().push_back(std::move(front));
                     }
                 }
